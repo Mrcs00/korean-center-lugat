@@ -70,10 +70,10 @@ export default function LandingPage() {
                 Boshlash
               </Link>
               <Link
-                href="/dashboard"
+                href="/login"
                 className="h-14 px-8 rounded-2xl bg-surface border border-border font-semibold flex items-center hover:border-border-strong transition-colors shadow-[var(--shadow-xs)]"
               >
-                Demo ko'rish
+                Kirish
               </Link>
             </div>
 
