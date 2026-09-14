@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Pretendard Variable";
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/PretendardVariable.woff2") format("woff2-variations");
+}
+
+:root {
+  /* Premium TOPIK 3-6 palette */
+  --background: #f8f8f6;
+  --surface: #ffffff;
+  --foreground: #1a1a17;
+  --muted: #6b6b64;
+  --muted-soft: #9b9a91;
+  --brand: #f5b800;
+  --brand-dark: #c99400;
+  --brand-darker: #967000;
+  --brand-soft: #fdf1cf;
+  --brand-tint: #fffbef;
+  --border: #ececE6;
+  --border-strong: #ddddd3;
+  --red: #d94a4a;
+  --red-soft: #fbeceb;
+  --amber: #d98c1f;
+  --amber-soft: #faefdd;
+  --green: #34926a;
+  --green-soft: #e9f4ee;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --shadow-xs: 0 1px 2px rgba(26, 26, 23, 0.035);
+  --shadow-sm: 0 1px 2px rgba(26, 26, 23, 0.035), 0 4px 12px -6px rgba(26, 26, 23, 0.05);
+  --shadow-md: 0 2px 4px rgba(26, 26, 23, 0.035), 0 12px 28px -10px rgba(26, 26, 23, 0.09);
+  --shadow-lg: 0 4px 8px rgba(26, 26, 23, 0.04), 0 24px 48px -16px rgba(26, 26, 23, 0.12);
+  --shadow-brand: 0 8px 20px -6px rgba(245, 184, 0, 0.30);
+}
+
+.dark {
+  --background: #131311;
+  --surface: #1c1c19;
+  --foreground: #f3f2ed;
+  --muted: #a3a196;
+  --muted-soft: #75746a;
+  --brand: #f5b800;
+  --brand-dark: #ffcc2e;
+  --brand-darker: #ffdb6b;
+  --brand-soft: #3a300f;
+  --brand-tint: #211c0d;
+  --border: #2c2c27;
+  --border-strong: #3d3d36;
+  --red: #f27d7d;
+  --red-soft: #3a2323;
+  --amber: #f0b84f;
+  --amber-soft: #3a2f18;
+  --green: #5cbb92;
+  --green-soft: #1f342b;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 14px -6px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25), 0 14px 32px -10px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.3), 0 26px 52px -16px rgba(0, 0, 0, 0.55);
+  --shadow-brand: 0 8px 20px -6px rgba(245, 184, 0, 0.22);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-darker: var(--brand-darker);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-tint: var(--brand-tint);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-red: var(--red);
+  --color-red-soft: var(--red-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
+  --font-display: var(--font-stack-display);
+  --font-sans: var(--font-stack-display);
+  --font-kr: var(--font-stack-kr);
+  --font-stack-display: "Pretendard Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-stack-kr: "Pretendard Variable", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", var(--font-stack-display);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-stack-display);
+  font-feature-settings: "ss01" 1, "cv01" 1;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  transition: background-color 0.25s var(--ease-out-quart), color 0.25s var(--ease-out-quart);
+}
+
+.font-kr {
+  font-family: var(--font-stack-kr);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--brand);
+  color: #1a1a17;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+/* Subtle woven-paper texture — reads as "study material", not decoration */
+.bg-grain {
+  background-image: radial-gradient(rgba(26, 26, 23, 0.03) 0.6px, transparent 0.6px);
+  background-size: 14px 14px;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s var(--ease-out-quart) both;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--r, 0deg)); }
+}
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(245, 184, 0, 0.35); }
+  100% { box-shadow: 0 0 0 10px rgba(245, 184, 0, 0); }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 1.8s var(--ease-out-quart) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  /* Always print on plain white paper, even if dark mode is active. */
+  html.dark {
+    --background: #ffffff;
+    --foreground: #18170f;
+    --muted: #6b6b64;
+    --muted-soft: #9b9a91;
+    --border: #ececE6;
+  }
+  body {
+    background: #ffffff;
+  }
+  @page {
+    margin: 14mm 12mm;
+  }
+}
