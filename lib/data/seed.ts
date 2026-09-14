@@ -3,6 +3,7 @@ import { topik35ListeningWords } from "./topik-35-listening-words";
 import { topik36ReadingWords } from "./topik-36-reading-words";
 import { topik36ListeningWords } from "./topik-36-listening-words";
 import { topik37ReadingWords } from "./topik-37-reading-words";
+import { topik37ListeningWords } from "./topik-37-listening-words";
 import { topik41ReadingWords } from "./topik-41-reading-words";
 import { topik41ListeningWords } from "./topik-41-listening-words";
 import { topik47ReadingWords } from "./topik-47-reading-words";
@@ -378,6 +379,15 @@ export const TOPIK_37_READING_SET: VocabularySet = {
   wordCount: topik37ReadingWords.length,
 };
 
+export const TOPIK_37_LISTENING_SET: VocabularySet = {
+  id: "topik-37-listening",
+  topikLevel: 5,
+  setNumber: 37,
+  title: "37-TOPIK 듣기",
+  description: "Tinglab tushunish so'zlari",
+  wordCount: topik37ListeningWords.length,
+};
+
 export const TOPIK_41_READING_SET: VocabularySet = {
   id: "topik-41-reading",
   topikLevel: 5,
@@ -493,6 +503,7 @@ export const VOCAB_SETS: VocabularySet[] = [
   TOPIK_36_READING_SET,
   TOPIK_36_LISTENING_SET,
   TOPIK_37_READING_SET,
+  TOPIK_37_LISTENING_SET,
   TOPIK_41_READING_SET,
   TOPIK_41_LISTENING_SET,
   TOPIK_47_READING_SET,
@@ -514,6 +525,7 @@ export const VOCAB_WORDS: VocabularyWord[] = [
   ...topik36ReadingWords,
   ...topik36ListeningWords,
   ...topik37ReadingWords,
+  ...topik37ListeningWords,
   ...topik41ReadingWords,
   ...topik41ListeningWords,
   ...topik47ReadingWords,
