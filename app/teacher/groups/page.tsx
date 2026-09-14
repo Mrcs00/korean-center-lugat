@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UsersRound, Plus, X } from "lucide-react";
+import { UsersRound, Plus, X, Trash2 } from "lucide-react";
 import { TeacherShell } from "@/components/layout/TeacherShell";
 import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
@@ -15,6 +15,26 @@ export default function TeacherGroupsPage() {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [groupToDelete, setGroupToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!groupToDelete) return;
+    setDeleting(true);
+    setDeleteError(null);
+
+    const { error } = await supabase.from("groups").delete().eq("id", groupToDelete.id);
+
+    setDeleting(false);
+    if (error) {
+      setDeleteError(error.message);
+      return;
+    }
+
+    setGroupToDelete(null);
+    refresh();
+  };
 
   const handleCreate = async () => {
     const trimmed = name.trim();
@@ -77,6 +97,13 @@ export default function TeacherGroupsPage() {
                         </p>
                       </div>
                     </div>
+                    <button
+                      onClick={() => setGroupToDelete({ id: group.id, name: group.name })}
+                      title="Guruhni o'chirish"
+                      className="h-9 w-9 flex items-center justify-center rounded-xl text-muted hover:text-red hover:bg-red-soft transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                   {members.length > 0 && (
                     <div className="flex -space-x-2">
@@ -129,6 +156,55 @@ export default function TeacherGroupsPage() {
               <Button size="lg" className="w-full mt-4" disabled={!name.trim() || saving} onClick={handleCreate}>
                 {saving ? "Yaratilmoqda..." : "Guruh yaratish"}
               </Button>
+            </Card>
+          </div>
+        )}
+
+        {groupToDelete && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-5"
+            onClick={() => setGroupToDelete(null)}
+          >
+            <Card elevation="lg" className="p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg">Guruhni o'chirish</h3>
+                <button
+                  onClick={() => setGroupToDelete(null)}
+                  className="text-muted hover:text-foreground"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p className="text-sm text-muted">
+                <span className="font-semibold text-foreground">{groupToDelete.name}</span> guruhini
+                o'chirmoqchimisiz? Guruhdagi barcha o'quvchilar guruhdan chiqariladi. Bu amalni
+                qaytarib bo'lmaydi.
+              </p>
+
+              {deleteError && (
+                <p className="text-xs text-red bg-red-soft rounded-lg px-3 py-2 mt-3">{deleteError}</p>
+              )}
+
+              <div className="flex gap-3 mt-4">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="flex-1"
+                  onClick={() => setGroupToDelete(null)}
+                >
+                  Bekor qilish
+                </Button>
+                <Button
+                  variant="danger"
+                  size="lg"
+                  className="flex-1"
+                  disabled={deleting}
+                  onClick={handleDelete}
+                >
+                  {deleting ? "O'chirilmoqda..." : "O'chirish"}
+                </Button>
+              </div>
             </Card>
           </div>
         )}

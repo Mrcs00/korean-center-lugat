@@ -6,3 +6,10 @@
 
 create policy "teachers can create groups" on groups
   for insert with check (public.is_teacher());
+
+-- ── Deleting a group ─────────────────────────────────────────────────────
+-- Lets teachers delete groups from the teacher panel (group_members rows
+-- for that group are removed automatically via the ON DELETE CASCADE on
+-- group_members.group_id, defined in auth-schema.sql).
+create policy "teachers can delete groups" on groups
+  for delete using (public.is_teacher());
