@@ -7,7 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useStore } from "@/lib/store/progressStore";
-import { useAssignments } from "@/lib/store/assignmentStore";
+import { RealAssignment, fetchAssignmentsForGroup } from "@/lib/services/assignmentService";
 import { MOCK_STUDENTS } from "@/lib/data/teacherMock";
 import { VOCAB_SETS } from "@/lib/data/seed";
 import { setProgressPercent } from "@/lib/services/statsService";
@@ -20,11 +20,12 @@ interface RealGroupmate {
 
 export default function GroupsPage() {
   const { profile, progress } = useStore();
-  const { assignments } = useAssignments();
 
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [realGroupId, setRealGroupId] = useState<string | null>(null);
   const [realGroupName, setRealGroupName] = useState<string | null>(null);
   const [realGroupmates, setRealGroupmates] = useState<RealGroupmate[]>([]);
+  const [myAssignments, setMyAssignments] = useState<RealAssignment[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,18 +51,23 @@ export default function GroupsPage() {
 
       const groupName = (membership.groups as unknown as { name: string } | null)?.name ?? null;
 
-      const { data: mates } = await supabase
-        .from("group_members")
-        .select("student_id, profiles(id, full_name)")
-        .eq("group_id", membership.group_id);
+      const [{ data: mates }, assignments] = await Promise.all([
+        supabase
+          .from("group_members")
+          .select("student_id, profiles(id, full_name)")
+          .eq("group_id", membership.group_id),
+        fetchAssignmentsForGroup(membership.group_id).catch(() => []),
+      ]);
 
       if (!cancelled) {
+        setRealGroupId(membership.group_id);
         setRealGroupName(groupName);
         setRealGroupmates(
           (mates ?? [])
             .map((m) => m.profiles as unknown as { id: string; full_name: string } | null)
             .filter((p): p is RealGroupmate => Boolean(p) && p!.id !== user.id)
         );
+        setMyAssignments(assignments);
         setLoadingAuth(false);
       }
     }
@@ -75,7 +81,7 @@ export default function GroupsPage() {
   // Prefer real Supabase group data (once registered/logged in via
   // /register or /login); fall back to the offline mock roster so the demo
   // still works before Supabase is set up.
-  const usingRealData = realGroupName !== null;
+  const usingRealData = realGroupId !== null;
   const mockMe = MOCK_STUDENTS.find((s) => s.fullName === profile.fullName) ?? MOCK_STUDENTS[0];
   const groupName = realGroupName ?? mockMe.group;
   const classmates: { id: string; fullName: string; masteryPercent?: number }[] = usingRealData
@@ -85,8 +91,6 @@ export default function GroupsPage() {
         fullName: s.fullName,
         masteryPercent: s.masteryPercent,
       }));
-
-  const myAssignments = assignments.filter((a) => a.groupId === groupName);
 
   if (loadingAuth) {
     return (
@@ -143,7 +147,7 @@ export default function GroupsPage() {
                     </div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-muted flex items-center gap-1">
-                        <Clock size={12} /> Muddat: {a.deadline}
+                        <Clock size={12} /> Muddat: {a.deadline ?? "Muddatsiz"}
                       </span>
                       <span className={`text-xs font-bold ${met ? "text-green" : "text-brand-darker"}`}>
                         {pct}% {met && "✓"}

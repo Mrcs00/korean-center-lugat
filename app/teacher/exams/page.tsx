@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Target, Plus, Clock, Trash2, X, Users } from "lucide-react";
 import { TeacherShell } from "@/components/layout/TeacherShell";
 import { TeacherGate } from "@/components/layout/TeacherGate";
@@ -9,7 +9,12 @@ import { Button } from "@/components/ui/Button";
 import { VOCAB_SETS } from "@/lib/data/seed";
 import { SEOUL_BOOKS } from "@/lib/data/seoulHangugoMeta";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
-import { useAssignments } from "@/lib/store/assignmentStore";
+import {
+  RealAssignment,
+  fetchAllAssignments,
+  createAssignment,
+  deleteAssignment,
+} from "@/lib/services/assignmentService";
 
 // Groups the huge flat VOCAB_SETS list into <optgroup> sections so the
 // picker stays usable across TOPIK reading/listening sets and every
@@ -37,29 +42,58 @@ function useGroupedSetOptions() {
 
 export default function TeacherExamsPage() {
   const { status, students, groups, errorMessage, refresh } = useTeacherData();
-  const { assignments, addAssignment, removeAssignment } = useAssignments();
   const groupedSets = useGroupedSetOptions();
   const [formOpen, setFormOpen] = useState(false);
 
-  const [groupName, setGroupName] = useState("");
+  const [assignments, setAssignments] = useState<RealAssignment[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const [groupId, setGroupId] = useState("");
   const [setId, setSetId] = useState(groupedSets[0]?.sets[0]?.id ?? "");
   const [deadline, setDeadline] = useState("");
   const [minMastery, setMinMastery] = useState(70);
 
-  useEffect(() => {
-    if (groups.length > 0 && !groupName) setGroupName(groups[0].name);
-  }, [groups, groupName]);
+  const loadAssignments = useCallback(async () => {
+    try {
+      setAssignments(await fetchAllAssignments());
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Noma'lum xato");
+    }
+  }, []);
 
-  const handleCreate = () => {
-    if (!setId || !groupName) return;
-    addAssignment({
-      groupId: groupName,
-      setId,
-      deadline: deadline || "Muddatsiz",
-      minimumMastery: minMastery,
-    });
-    setFormOpen(false);
-    setDeadline("");
+  useEffect(() => {
+    if (status === "ready") loadAssignments();
+  }, [status, loadAssignments]);
+
+  useEffect(() => {
+    if (groups.length > 0 && !groupId) setGroupId(groups[0].id);
+  }, [groups, groupId]);
+
+  const handleCreate = async () => {
+    if (!setId || !groupId) return;
+    setSaving(true);
+    try {
+      await createAssignment({
+        groupId,
+        setId,
+        deadline: deadline || null,
+        minimumMastery: minMastery,
+      });
+      setFormOpen(false);
+      setDeadline("");
+      await loadAssignments();
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Noma'lum xato");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    await deleteAssignment(id);
+    loadAssignments();
   };
 
   return (
@@ -77,6 +111,9 @@ export default function TeacherExamsPage() {
           </p>
 
           <div className="flex flex-col gap-3">
+            {loadError && (
+              <p className="text-xs text-red bg-red-soft rounded-lg px-3 py-2">{loadError}</p>
+            )}
             {assignments.length === 0 && (
               <Card className="p-8 text-center">
                 <p className="text-sm text-muted">Hali topshiriq berilmagan.</p>
@@ -84,7 +121,7 @@ export default function TeacherExamsPage() {
             )}
             {assignments.map((a) => {
               const set = VOCAB_SETS.find((s) => s.id === a.setId);
-              const memberCount = students.filter((s) => s.group === a.groupId).length;
+              const memberCount = students.filter((s) => s.group === a.groupName).length;
               return (
                 <Card key={a.id} className="p-5">
                   <div className="flex items-center justify-between">
@@ -94,11 +131,11 @@ export default function TeacherExamsPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-kr font-bold truncate">
-                          {set?.title ?? a.setId} — {a.groupId}
+                          {set?.title ?? a.setId} — {a.groupName}
                         </p>
                         <p className="text-xs text-muted flex items-center gap-3 mt-0.5">
                           <span className="flex items-center gap-1">
-                            <Clock size={12} /> Muddat: {a.deadline}
+                            <Clock size={12} /> Muddat: {a.deadline ?? "Muddatsiz"}
                           </span>
                           <span className="flex items-center gap-1">
                             <Users size={12} /> {memberCount} o'quvchi
@@ -107,7 +144,7 @@ export default function TeacherExamsPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => removeAssignment(a.id)}
+                      onClick={() => handleRemove(a.id)}
                       aria-label="O'chirish"
                       className="h-8 w-8 rounded-lg hover:bg-red-soft hover:text-red flex items-center justify-center transition-colors shrink-0"
                     >
@@ -140,13 +177,13 @@ export default function TeacherExamsPage() {
                 <div>
                   <label className="text-xs font-semibold text-muted">Guruh</label>
                   <select
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
+                    value={groupId}
+                    onChange={(e) => setGroupId(e.target.value)}
                     className="mt-1.5 w-full h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                   >
                     {groups.length === 0 && <option value="">Guruhlar yo'q</option>}
                     {groups.map((g) => (
-                      <option key={g.id} value={g.name}>
+                      <option key={g.id} value={g.id}>
                         {g.name}
                       </option>
                     ))}
@@ -195,8 +232,8 @@ export default function TeacherExamsPage() {
                   </div>
                 </div>
 
-                <Button size="lg" className="w-full mt-1" onClick={handleCreate}>
-                  Topshiriq berish
+                <Button size="lg" className="w-full mt-1" onClick={handleCreate} disabled={saving}>
+                  {saving ? "Yuklanmoqda..." : "Topshiriq berish"}
                 </Button>
               </div>
             </Card>

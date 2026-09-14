@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ProgressProvider } from "@/lib/store/progressStore";
-import { AssignmentProvider } from "@/lib/store/assignmentStore";
 import { ThemeProvider, themeInitScript } from "@/lib/store/themeStore";
 
 export const metadata: Metadata = {
@@ -17,9 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-full bg-background text-foreground">
         <ThemeProvider>
-          <ProgressProvider>
-            <AssignmentProvider>{children}</AssignmentProvider>
-          </ProgressProvider>
+          <ProgressProvider>{children}</ProgressProvider>
         </ThemeProvider>
       </body>
     </html>
