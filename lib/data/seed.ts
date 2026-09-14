@@ -6,9 +6,13 @@ import { topik37ReadingWords } from "./topik-37-reading-words";
 import { topik41ReadingWords } from "./topik-41-reading-words";
 import { topik41ListeningWords } from "./topik-41-listening-words";
 import { topik47ReadingWords } from "./topik-47-reading-words";
+import { topik47ListeningWords } from "./topik-47-listening-words";
 import { topik52ReadingWords } from "./topik-52-reading-words";
+import { topik52ListeningWords } from "./topik-52-listening-words";
 import { topik60ReadingWords } from "./topik-60-reading-words";
+import { topik60ListeningWords } from "./topik-60-listening-words";
 import { topik64ReadingWords } from "./topik-64-reading-words";
+import { topik64ListeningWords } from "./topik-64-listening-words";
 import { topik83ReadingWords } from "./topik-83-reading-words";
 import { topik91ReadingWords } from "./topik-91-reading-words";
 import { SEOUL_VOCAB_SETS, SEOUL_VOCAB_WORDS } from "./seoulHangugoWords";
@@ -401,6 +405,15 @@ export const TOPIK_47_READING_SET: VocabularySet = {
   wordCount: topik47ReadingWords.length,
 };
 
+export const TOPIK_47_LISTENING_SET: VocabularySet = {
+  id: "topik-47-listening",
+  topikLevel: 5,
+  setNumber: 47,
+  title: "47-TOPIK 듣기",
+  description: "Tinglab tushunish so'zlari",
+  wordCount: topik47ListeningWords.length,
+};
+
 export const TOPIK_52_READING_SET: VocabularySet = {
   id: "topik-52-reading",
   topikLevel: 5,
@@ -408,6 +421,15 @@ export const TOPIK_52_READING_SET: VocabularySet = {
   title: "52-TOPIK 읽기",
   description: "O'qib tushunish so'zlari",
   wordCount: topik52ReadingWords.length,
+};
+
+export const TOPIK_52_LISTENING_SET: VocabularySet = {
+  id: "topik-52-listening",
+  topikLevel: 5,
+  setNumber: 52,
+  title: "52-TOPIK 듣기",
+  description: "Tinglab tushunish so'zlari",
+  wordCount: topik52ListeningWords.length,
 };
 
 export const TOPIK_60_READING_SET: VocabularySet = {
@@ -419,6 +441,15 @@ export const TOPIK_60_READING_SET: VocabularySet = {
   wordCount: topik60ReadingWords.length,
 };
 
+export const TOPIK_60_LISTENING_SET: VocabularySet = {
+  id: "topik-60-listening",
+  topikLevel: 5,
+  setNumber: 60,
+  title: "60-TOPIK 듣기",
+  description: "Tinglab tushunish so'zlari",
+  wordCount: topik60ListeningWords.length,
+};
+
 export const TOPIK_64_READING_SET: VocabularySet = {
   id: "topik-64-reading",
   topikLevel: 5,
@@ -426,6 +457,15 @@ export const TOPIK_64_READING_SET: VocabularySet = {
   title: "64-TOPIK 읽기",
   description: "O'qib tushunish so'zlari",
   wordCount: topik64ReadingWords.length,
+};
+
+export const TOPIK_64_LISTENING_SET: VocabularySet = {
+  id: "topik-64-listening",
+  topikLevel: 5,
+  setNumber: 64,
+  title: "64-TOPIK 듣기",
+  description: "Tinglab tushunish so'zlari",
+  wordCount: topik64ListeningWords.length,
 };
 
 export const TOPIK_83_READING_SET: VocabularySet = {
@@ -456,9 +496,13 @@ export const VOCAB_SETS: VocabularySet[] = [
   TOPIK_41_READING_SET,
   TOPIK_41_LISTENING_SET,
   TOPIK_47_READING_SET,
+  TOPIK_47_LISTENING_SET,
   TOPIK_52_READING_SET,
+  TOPIK_52_LISTENING_SET,
   TOPIK_60_READING_SET,
+  TOPIK_60_LISTENING_SET,
   TOPIK_64_READING_SET,
+  TOPIK_64_LISTENING_SET,
   TOPIK_83_READING_SET,
   TOPIK_91_READING_SET,
   ...SEOUL_VOCAB_SETS,
@@ -473,9 +517,13 @@ export const VOCAB_WORDS: VocabularyWord[] = [
   ...topik41ReadingWords,
   ...topik41ListeningWords,
   ...topik47ReadingWords,
+  ...topik47ListeningWords,
   ...topik52ReadingWords,
+  ...topik52ListeningWords,
   ...topik60ReadingWords,
+  ...topik60ListeningWords,
   ...topik64ReadingWords,
+  ...topik64ListeningWords,
   ...topik83ReadingWords,
   ...topik91ReadingWords,
   ...SEOUL_VOCAB_WORDS,
