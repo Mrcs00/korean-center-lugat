@@ -31,6 +31,7 @@ const MOBILE_LINKS = [
   { href: "/vocabulary", label: "Lug'atlar", icon: BookOpen },
   { href: "/review", label: "Takrorlash", icon: RotateCw },
   { href: "/exam", label: "Test", icon: Target },
+  { href: "/groups", label: "Guruhlar", icon: Users },
   { href: "/profile", label: "Profil", icon: User },
 ];
 
