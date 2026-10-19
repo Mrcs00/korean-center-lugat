@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Volume2, ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -17,17 +17,39 @@ const TYPE_LABEL: Record<string, string> = {
 
 export function ExamEngine({
   questions,
-  timeLimitSec,
+  endsAt,
+  initialAnswers,
+  initialIndex,
+  onProgress,
   onFinish,
 }: {
   questions: QuizQuestion[];
-  timeLimitSec?: number;
+  /** Epoch ms when the exam ends. Absolute, so the timer survives leaving the page. */
+  endsAt?: number | null;
+  initialAnswers?: Record<number, string>;
+  initialIndex?: number;
+  /** Called whenever the answers or the current question change (for persistence). */
+  onProgress?: (answers: Record<number, string>, index: number) => void;
   onFinish: (results: QuizResultEntry[]) => void;
 }) {
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [remaining, setRemaining] = useState(timeLimitSec ?? 0);
+  const [index, setIndex] = useState(() =>
+    Math.min(Math.max(initialIndex ?? 0, 0), Math.max(questions.length - 1, 0))
+  );
+  const [answers, setAnswers] = useState<Record<number, string>>(initialAnswers ?? {});
+  const [remaining, setRemaining] = useState(() =>
+    endsAt ? Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)) : 0
+  );
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+
+  const answersRef = useRef(answers);
+  const finishedRef = useRef(false);
+  const onFinishRef = useRef(onFinish);
+
+  // Keep refs in sync (outside render) so the timer callback sees fresh values.
+  useEffect(() => {
+    answersRef.current = answers;
+    onFinishRef.current = onFinish;
+  });
 
   const question = questions[index];
   const answeredCount = Object.keys(answers).length;
@@ -35,7 +57,7 @@ export function ExamEngine({
 
   const buildResults = (): QuizResultEntry[] =>
     questions.map((q, i) => {
-      const given = answers[i];
+      const given = answersRef.current[i];
       return {
         wordId: q.word.id,
         isCorrect: given !== undefined && normalize(given) === normalize(q.correctAnswer),
@@ -44,21 +66,35 @@ export function ExamEngine({
       };
     });
 
+  const finish = () => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    onFinishRef.current(buildResults());
+  };
+
+  // Timer is derived from the absolute end time, so it keeps counting down
+  // correctly even after the student leaves and comes back.
   useEffect(() => {
-    if (!timeLimitSec) return;
-    const timer = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(timer);
-          onFinish(buildResults());
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
+    if (!endsAt) return;
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      setRemaining(left);
+      if (left <= 0) {
+        clearInterval(timer);
+        finish();
+      }
+    };
+    const timer = setInterval(tick, 500);
+    tick();
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLimitSec]);
+  }, [endsAt]);
+
+  // Persist progress (answers + position) so the exam can be resumed.
+  useEffect(() => {
+    onProgress?.(answers, index);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, index]);
 
   if (!question) return null;
 
@@ -85,7 +121,7 @@ export function ExamEngine({
           <span className="text-muted-soft"> · {answeredCount} javob berilgan</span>
         </span>
         <div className="flex items-center gap-2">
-          {timeLimitSec ? (
+          {endsAt ? (
             <span className="text-sm font-bold tabular-nums bg-black/[0.05] px-2.5 py-1 rounded-lg">
               {minutes}:{seconds.toString().padStart(2, "0")}
             </span>
@@ -211,7 +247,7 @@ export function ExamEngine({
               <Button variant="secondary" className="flex-1" onClick={() => setConfirmSubmit(false)}>
                 Davom etish
               </Button>
-              <Button className="flex-1" onClick={() => onFinish(buildResults())}>
+              <Button className="flex-1" onClick={finish}>
                 Ha, yakunlash
               </Button>
             </div>

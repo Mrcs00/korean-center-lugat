@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,9 +13,11 @@ import {
   Users,
   User,
   Flame,
+  GraduationCap,
 } from "lucide-react";
 import { useStore } from "@/lib/store/progressStore";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { supabase } from "@/lib/supabase/client";
 
 const DESKTOP_LINKS = [
   { href: "/dashboard", label: "Bosh sahifa", icon: Home },
@@ -35,9 +38,40 @@ const MOBILE_LINKS = [
   { href: "/profile", label: "Profil", icon: User },
 ];
 
+// True only for signed-in accounts whose profile role is "teacher".
+function useIsTeacher(): boolean {
+  const [isTeacher, setIsTeacher] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function check(uid: string | null) {
+      if (!uid) {
+        if (!cancelled) setIsTeacher(false);
+        return;
+      }
+      const { data } = await supabase.from("profiles").select("role").eq("id", uid).single();
+      if (!cancelled) setIsTeacher(data?.role === "teacher");
+    }
+
+    supabase.auth.getSession().then(({ data }) => check(data.session?.user.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      check(session?.user.id ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  return isTeacher;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { profile } = useStore();
+  const isTeacher = useIsTeacher();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
@@ -82,6 +116,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
+        {isTeacher && (
+          <Link
+            href="/teacher"
+            className="mb-3 flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold bg-brand-soft text-foreground hover:brightness-95 transition-all"
+          >
+            <GraduationCap size={18} strokeWidth={2.25} />
+            {"O'qituvchi paneli"}
+          </Link>
+        )}
+
         <div className="mt-auto flex flex-col gap-3">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a17] to-[#2b2a24] border border-white/[0.06] px-4 py-4">
             <span className="font-kr absolute -right-2 -bottom-3 text-[64px] font-black text-white/[0.06] leading-none select-none">
@@ -124,7 +168,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Mobile floating theme toggle */}
-      <div className="lg:hidden fixed top-4 right-4 z-40">
+      <div className="lg:hidden fixed top-4 right-4 z-40 flex items-center gap-2">
+        {isTeacher && (
+          <Link
+            href="/teacher"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-full bg-brand-soft border border-border text-xs font-semibold shadow-[var(--shadow-sm)]"
+          >
+            <GraduationCap size={16} strokeWidth={2.25} />
+            {"O'qituvchi"}
+          </Link>
+        )}
         <ThemeToggle className="bg-surface border border-border shadow-[var(--shadow-sm)]" />
       </div>
 

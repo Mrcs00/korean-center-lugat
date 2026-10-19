@@ -27,7 +27,7 @@ function buildChoices(correct: string, pool: string[], count = 4): string[] {
 export function buildQuiz(
   words: VocabularyWord[],
   length: number,
-  options: { allowedTypes?: QuizType[]; selectionMode?: "random" | "ranked" } = {}
+  options: { allowedTypes?: QuizType[]; selectionMode?: "random" | "ranked" | "ordered" } = {}
 ): QuizQuestion[] {
   const allowedTypes = options.allowedTypes ?? TYPES;
   const selectionMode = options.selectionMode ?? "random";
@@ -40,10 +40,15 @@ export function buildQuiz(
   // wrong words first via rankForQuiz) — take the top N as-is, then shuffle
   // only the presentation order so the same weak words don't always appear
   // first. "random": pick N uniformly at random from the whole pool.
+  // "ordered": take the first N words exactly as given (no shuffling) so the
+  // questions follow the set's own word order — used by the exam section.
+  const limit = Math.min(length, words.length);
   const selected =
-    selectionMode === "ranked"
-      ? shuffle(words.slice(0, Math.min(length, words.length)))
-      : shuffle(words).slice(0, Math.min(length, words.length));
+    selectionMode === "ordered"
+      ? words.slice(0, limit)
+      : selectionMode === "ranked"
+      ? shuffle(words.slice(0, limit))
+      : shuffle(words).slice(0, limit);
 
   return selected.map((word, i) => {
     let type = allowedTypes[i % allowedTypes.length];

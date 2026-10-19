@@ -4,11 +4,9 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
-import { useStore } from "@/lib/store/progressStore";
 
 export default function TableViewPage() {
   const params = useParams<{ setId: string }>();
-  const { progress } = useStore();
   const set = VOCAB_SETS.find((s) => s.id === params.setId);
   const words = VOCAB_WORDS.filter((w) => w.setId === params.setId).sort((a, b) => a.order - b.order);
 
@@ -48,38 +46,17 @@ export default function TableViewPage() {
               <tr className="border-b-2 border-border bg-black/[0.02]">
                 <th className="text-left py-2.5 px-3 w-10 font-semibold text-muted text-xs uppercase tracking-wide">№</th>
                 <th className="text-left py-2.5 px-3 font-semibold text-muted text-xs uppercase tracking-wide">한국어</th>
-                <th className="text-left py-2.5 px-3 font-semibold text-muted text-xs uppercase tracking-wide">Talaffuz</th>
                 <th className="text-left py-2.5 px-3 font-semibold text-muted text-xs uppercase tracking-wide">O'zbekcha</th>
-                <th className="text-left py-2.5 px-3 font-semibold text-muted text-xs uppercase tracking-wide">Holat</th>
               </tr>
             </thead>
             <tbody>
-              {words.map((w) => {
-                const p = progress[w.id];
-                return (
-                  <tr key={w.id} className="border-b border-border last:border-0 hover:bg-black/[0.015]">
-                    <td className="py-2.5 px-3 text-muted-soft tabular-nums">{w.order}</td>
-                    <td className="font-kr py-2.5 px-3 font-semibold whitespace-nowrap">{w.koreanWord}</td>
-                    <td className="py-2.5 px-3 text-muted whitespace-nowrap">
-                      {w.pronunciation ? `[${w.pronunciation}]` : "—"}
-                    </td>
-                    <td className="py-2.5 px-3">{w.uzbekTranslation}</td>
-                    <td className="py-2.5 px-3">
-                      <span
-                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${
-                          !p
-                            ? "bg-black/[0.05] text-muted"
-                            : p.masteryLevel >= 3
-                            ? "bg-green-soft text-green"
-                            : "bg-amber-soft text-amber"
-                        }`}
-                      >
-                        {!p ? "Yangi" : p.masteryLevel >= 3 ? "O'zlashtirilgan" : "O'rganilmoqda"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {words.map((w) => (
+                <tr key={w.id} className="border-b border-border last:border-0 hover:bg-black/[0.015]">
+                  <td className="py-2.5 px-3 text-muted-soft tabular-nums">{w.order}</td>
+                  <td className="font-kr py-2.5 px-3 font-semibold whitespace-nowrap">{w.koreanWord}</td>
+                  <td className="py-2.5 px-3">{w.uzbekTranslation}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
