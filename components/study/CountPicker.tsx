@@ -9,6 +9,8 @@ export interface CountSelection {
   /** 1-based, inclusive position of the last word */
   to: number;
   count: number;
+  /** Number of questions chosen (only when `withQuestionCount` is on) */
+  questions: number;
 }
 
 const PRESETS = [10, 20, 30, 50, 100];
@@ -26,12 +28,17 @@ export function CountPicker({
   total,
   defaultCount,
   withRange = false,
+  withQuestionCount = false,
+  defaultQuestions = 10,
   confirmLabel,
   onConfirm,
 }: {
   total: number;
   defaultCount?: number;
   withRange?: boolean;
+  /** Adds a separate "how many questions" field (limited by the chosen words). */
+  withQuestionCount?: boolean;
+  defaultQuestions?: number;
   confirmLabel: string;
   onConfirm: (selection: CountSelection) => void;
 }) {
@@ -40,6 +47,7 @@ export function CountPicker({
   const [countText, setCountText] = useState(String(initial));
   const [fromText, setFromText] = useState("1");
   const [toText, setToText] = useState(String(Math.min(100, total)));
+  const [questionsText, setQuestionsText] = useState(String(Math.min(defaultQuestions, initial)));
 
   const presets = PRESETS.filter((p) => p < total);
 
@@ -50,14 +58,25 @@ export function CountPicker({
     const n = toInt(countText);
     if (n === null || n < 1) error = "Son kiriting (kamida 1).";
     else if (n > total) error = `Bu to'plamda jami ${total} ta so'z bor.`;
-    else selection = { from: 1, to: n, count: n };
+    else selection = { from: 1, to: n, count: n, questions: n };
   } else {
     const f = toInt(fromText);
     const t = toInt(toText);
     if (f === null || t === null || f < 1 || t < 1) error = "Ikkala sonni kiriting.";
     else if (f > t) error = "Boshlanish soni oxirgisidan katta bo'lmasligi kerak.";
     else if (t > total) error = `Bu to'plamda jami ${total} ta so'z bor.`;
-    else selection = { from: f, to: t, count: t - f + 1 };
+    else selection = { from: f, to: t, count: t - f + 1, questions: t - f + 1 };
+  }
+
+  // Optional second choice: how many questions to ask from the chosen words.
+  let questionsError: string | null = null;
+  if (withQuestionCount && selection) {
+    const q = toInt(questionsText);
+    if (q === null || q < 1) questionsError = "Savollar sonini kiriting (kamida 1).";
+    else if (q > selection.count)
+      questionsError = `Savollar soni tanlangan so'zlardan (${selection.count}) ko'p bo'lishi mumkin emas.`;
+    else selection = { ...selection, questions: q };
+    if (questionsError) selection = null;
   }
 
   const chip = (active: boolean) =>
@@ -134,8 +153,39 @@ export function CountPicker({
         </>
       )}
 
-      <p className={`text-xs mt-2 min-h-[1rem] ${error ? "text-red" : "text-muted"}`}>
-        {error ?? (selection ? `${selection.count} ta savol tanlandi` : "")}
+      {withQuestionCount && (
+        <div className="mt-5">
+          <p className="text-sm font-semibold mb-2">Nechta savol?</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {[10, 20, 30, 50, 100].map((q) => (
+              <button
+                key={q}
+                type="button"
+                className={chip(toInt(questionsText) === q)}
+                onClick={() => setQuestionsText(String(q))}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+          <input
+            inputMode="numeric"
+            value={questionsText}
+            onChange={(e) => setQuestionsText(e.target.value)}
+            placeholder="Boshqa son..."
+            className={inputCls}
+          />
+        </div>
+      )}
+
+      <p className={`text-xs mt-2 min-h-[1rem] ${error || questionsError ? "text-red" : "text-muted"}`}>
+        {error ??
+          questionsError ??
+          (selection
+            ? withQuestionCount
+              ? `${selection.count} ta so'zdan ${selection.questions} ta savol`
+              : `${selection.count} ta savol tanlandi`
+            : "")}
       </p>
 
       <Button size="lg" className="w-full mt-3" disabled={!selection} onClick={() => selection && onConfirm(selection)}>

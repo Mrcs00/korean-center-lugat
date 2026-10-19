@@ -12,26 +12,26 @@ import { CountPicker } from "@/components/study/CountPicker";
 import { useStore } from "@/lib/store/progressStore";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
 import { buildQuiz } from "@/lib/services/quizService";
-import { rankForQuiz } from "@/lib/services/spacedRepetition";
-import { defaultProgress } from "@/lib/services/spacedRepetition";
 
 function QuizContent() {
   const params = useSearchParams();
   const setId = params.get("set") ?? VOCAB_SETS[0]?.id;
-  const { progress, reviewWord } = useStore();
+  const { reviewWord } = useStore();
   const [seed, setSeed] = useState(0);
   const [done, setDone] = useState<QuizResultEntry[] | null>(null);
-  const [count, setCount] = useState<number | null>(null); // null = still choosing
+  // null = still choosing. from/to are 1-based word positions within the set.
+  const [config, setConfig] = useState<{ from: number; to: number; questions: number } | null>(null);
 
-  const words = VOCAB_WORDS.filter((w) => w.setId === setId);
+  const words = VOCAB_WORDS.filter((w) => w.setId === setId).sort((a, b) => a.order - b.order);
 
+  // Questions are drawn at random (and shuffled) from only the words the
+  // student chose, e.g. words 1–35 of the set.
   const questions = useMemo(() => {
-    if (words.length === 0 || count === null) return [];
-    const progressList = words.map((w) => progress[w.id] ?? defaultProgress("demo-student", w.id));
-    const ranked = rankForQuiz(progressList).map((p) => words.find((w) => w.id === p.wordId)!);
-    return buildQuiz(ranked, Math.min(count, words.length), { selectionMode: "ranked" });
+    if (words.length === 0 || config === null) return [];
+    const chosen = words.slice(config.from - 1, config.to);
+    return buildQuiz(chosen, Math.min(config.questions, chosen.length), { selectionMode: "random" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setId, seed, words.length, count]);
+  }, [setId, seed, words.length, config]);
 
   if (words.length === 0) {
     return (
@@ -44,7 +44,7 @@ function QuizContent() {
     );
   }
 
-  if (count === null) {
+  if (config === null) {
     return (
       <div className="max-w-xl mx-auto px-5 py-8">
         <Link
@@ -58,11 +58,16 @@ function QuizContent() {
           <h1 className="font-kr text-xl font-extrabold mb-5">
             {VOCAB_SETS.find((s) => s.id === setId)?.title}
           </h1>
+          <p className="text-sm text-muted mb-5">
+            Qaysi so'zlarni yodlaganingizni tanlang, savollar faqat shulardan tasodifiy chiqadi.
+          </p>
           <CountPicker
             total={words.length}
-            defaultCount={10}
+            withRange
+            withQuestionCount
+            defaultQuestions={10}
             confirmLabel="Testni boshlash"
-            onConfirm={({ count: n }) => setCount(n)}
+            onConfirm={({ from, to, questions: q }) => setConfig({ from, to, questions: q })}
           />
         </Card>
       </div>
@@ -100,11 +105,11 @@ function QuizContent() {
             type="button"
             onClick={() => {
               setDone(null);
-              setCount(null);
+              setConfig(null);
             }}
             className="text-xs text-muted hover:text-foreground mt-4"
           >
-            Savollar sonini o'zgartirish
+            Sozlamalarni o'zgartirish
           </button>
         </Card>
       </div>
