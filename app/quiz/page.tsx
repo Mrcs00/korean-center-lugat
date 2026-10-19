@@ -8,6 +8,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { QuizEngine, QuizResultEntry } from "@/components/study/QuizEngine";
+import { CountPicker } from "@/components/study/CountPicker";
 import { useStore } from "@/lib/store/progressStore";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
 import { buildQuiz } from "@/lib/services/quizService";
@@ -20,16 +21,17 @@ function QuizContent() {
   const { progress, reviewWord } = useStore();
   const [seed, setSeed] = useState(0);
   const [done, setDone] = useState<QuizResultEntry[] | null>(null);
+  const [count, setCount] = useState<number | null>(null); // null = still choosing
 
   const words = VOCAB_WORDS.filter((w) => w.setId === setId);
 
   const questions = useMemo(() => {
-    if (words.length === 0) return [];
+    if (words.length === 0 || count === null) return [];
     const progressList = words.map((w) => progress[w.id] ?? defaultProgress("demo-student", w.id));
     const ranked = rankForQuiz(progressList).map((p) => words.find((w) => w.id === p.wordId)!);
-    return buildQuiz(ranked, Math.min(10, words.length), { selectionMode: "ranked" });
+    return buildQuiz(ranked, Math.min(count, words.length), { selectionMode: "ranked" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setId, seed, words.length]);
+  }, [setId, seed, words.length, count]);
 
   if (words.length === 0) {
     return (
@@ -38,6 +40,31 @@ function QuizContent() {
         <Link href="/vocabulary" className="text-sm font-semibold text-brand-dark mt-2 inline-block">
           Lug'atlarga qaytish
         </Link>
+      </div>
+    );
+  }
+
+  if (count === null) {
+    return (
+      <div className="max-w-xl mx-auto px-5 py-8">
+        <Link
+          href={`/vocabulary/${setId}`}
+          className="inline-flex items-center gap-1 text-sm text-muted mb-4 hover:text-foreground"
+        >
+          <ArrowLeft size={16} /> Orqaga
+        </Link>
+        <Card className="p-7">
+          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Test</p>
+          <h1 className="font-kr text-xl font-extrabold mb-5">
+            {VOCAB_SETS.find((s) => s.id === setId)?.title}
+          </h1>
+          <CountPicker
+            total={words.length}
+            defaultCount={10}
+            confirmLabel="Testni boshlash"
+            onConfirm={({ count: n }) => setCount(n)}
+          />
+        </Card>
       </div>
     );
   }
@@ -69,6 +96,16 @@ function QuizContent() {
               <Button className="w-full">Lug'atga qaytish</Button>
             </Link>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDone(null);
+              setCount(null);
+            }}
+            className="text-xs text-muted hover:text-foreground mt-4"
+          >
+            Savollar sonini o'zgartirish
+          </button>
         </Card>
       </div>
     );

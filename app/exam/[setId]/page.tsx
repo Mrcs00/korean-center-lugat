@@ -8,6 +8,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ExamEngine } from "@/components/study/ExamEngine";
+import { CountPicker, CountSelection } from "@/components/study/CountPicker";
 import { QuizResultEntry } from "@/components/study/QuizEngine";
 import { useStore } from "@/lib/store/progressStore";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
@@ -30,6 +31,7 @@ export default function ExamRunnerPage() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [session, setSession] = useState<ExamSession | null>(null); // saved, resumable session
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [picking, setPicking] = useState(false); // choosing how many words to be tested on
   const sessionKeyRef = useRef<string | null>(null);
   const sessionRef = useRef<ExamSession | null>(null);
   const finishedRef = useRef(false);
@@ -57,9 +59,10 @@ export default function ExamRunnerPage() {
     };
   }, [params.setId]);
 
-  const startNew = () => {
+  const startNew = ({ from, to }: CountSelection) => {
     const key = sessionKeyRef.current;
-    const qs = buildQuiz(words, words.length, { selectionMode: "ordered" });
+    const chosen = words.slice(from - 1, to);
+    const qs = buildQuiz(chosen, chosen.length, { selectionMode: "ordered" });
     const now = Date.now();
     const fresh: ExamSession = {
       questions: qs,
@@ -83,9 +86,12 @@ export default function ExamRunnerPage() {
     setPhase("running");
   };
 
-  const restart = () => {
+  // Starting over from the intro: ask how many words first, and only drop
+  // the old session once the new exam actually starts.
+  const startFromPicker = (selection: CountSelection) => {
     if (sessionKeyRef.current) clearExamSession(sessionKeyRef.current);
-    startNew();
+    setPicking(false);
+    startNew(selection);
   };
 
   const handleProgress = useCallback((answers: Record<number, string>, index: number) => {
@@ -129,13 +135,13 @@ export default function ExamRunnerPage() {
               Vocabulary Exam
             </p>
             <h1 className="text-2xl font-extrabold tracking-tight mb-1">{set.title}</h1>
-            <p className="text-muted text-sm mb-6">{words.length} ta savol</p>
+            <p className="text-muted text-sm mb-6">To'plamda {words.length} ta so'z</p>
             <ul className="text-sm text-left text-muted flex flex-col gap-1.5 mb-8 max-w-xs mx-auto">
               <li>⏱ Har bir savol uchun taxminan 20 soniya</li>
               <li>🔢 Savollar orasida erkin harakatlaning</li>
               <li>📊 Natija va xato so'zlar avtomatik saqlanadi</li>
             </ul>
-            {session ? (
+            {session && !picking ? (
               <div className="flex flex-col gap-2">
                 <p className="text-xs text-muted mb-1">
                   {expired
@@ -145,14 +151,28 @@ export default function ExamRunnerPage() {
                 <Button size="lg" onClick={resume}>
                   {expired ? "Natijani ko'rish" : "Davom ettirish"}
                 </Button>
-                <Button size="lg" variant="secondary" onClick={restart}>
+                <Button size="lg" variant="secondary" onClick={() => setPicking(true)}>
                   Qaytadan boshlash
                 </Button>
               </div>
             ) : (
-              <Button size="lg" onClick={startNew}>
-                Imtihonni boshlash
-              </Button>
+              <>
+                <CountPicker
+                  total={words.length}
+                  withRange
+                  confirmLabel="Imtihonni boshlash"
+                  onConfirm={startFromPicker}
+                />
+                {session && (
+                  <button
+                    type="button"
+                    onClick={() => setPicking(false)}
+                    className="text-xs text-muted hover:text-foreground mt-3"
+                  >
+                    ← Bekor qilish
+                  </button>
+                )}
+              </>
             )}
           </Card>
         </div>
