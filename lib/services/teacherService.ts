@@ -8,6 +8,7 @@ export interface RealStudent {
   fullName: string;
   username: string;
   group: string | null;
+  groupId: string | null;
   totalMastered: number;
   masteryPercent: number;
   wrongWords: { wordId: string; koreanWord: string; uzbekTranslation: string; timesWrong: number }[];
@@ -28,7 +29,7 @@ export async function fetchRealStudents(): Promise<RealStudent[]> {
   const [{ data: profiles, error: profilesError }, { data: memberships }, { data: allProgress }, { data: attempts }] =
     await Promise.all([
       supabase.from("profiles").select("id, full_name, username").eq("role", "student"),
-      supabase.from("group_members").select("student_id, groups(name)"),
+      supabase.from("group_members").select("student_id, group_id, groups(name)"),
       supabase.from("vocabulary_progress").select("student_id, word_id, mastery_level, wrong_count"),
       supabase
         .from("exam_attempts")
@@ -38,10 +39,10 @@ export async function fetchRealStudents(): Promise<RealStudent[]> {
 
   if (profilesError) throw profilesError;
 
-  const groupByStudent = new Map<string, string>();
+  const groupByStudent = new Map<string, { id: string; name: string }>();
   (memberships ?? []).forEach((m) => {
     const groupName = (m.groups as unknown as { name: string } | null)?.name;
-    if (groupName) groupByStudent.set(m.student_id, groupName);
+    if (groupName) groupByStudent.set(m.student_id, { id: m.group_id, name: groupName });
   });
 
   const progressByStudent = new Map<string, VocabularyProgress[]>();
@@ -104,7 +105,8 @@ export async function fetchRealStudents(): Promise<RealStudent[]> {
       id: p.id,
       fullName: p.full_name,
       username: p.username,
-      group: groupByStudent.get(p.id) ?? null,
+      group: groupByStudent.get(p.id)?.name ?? null,
+      groupId: groupByStudent.get(p.id)?.id ?? null,
       totalMastered,
       masteryPercent,
       wrongWords,
@@ -119,4 +121,40 @@ export async function fetchRealGroups(): Promise<{ id: string; name: string }[]>
   const { data, error } = await supabase.from("groups").select("id, name").order("name");
   if (error) throw error;
   return data ?? [];
+}
+
+/**
+ * Moves students into one group (or out of every group when groupId is null).
+ * The new membership is added first and the old ones are removed afterwards,
+ * so a failure never leaves a student without a group by accident.
+ *
+ * `expectedRemovals` is how many old memberships we expect to delete; if fewer
+ * rows were actually removed, the teacher is most likely missing the RLS
+ * policies from docs/teacher-members-schema.sql, so we say so.
+ */
+export async function moveStudentsToGroup(
+  studentIds: string[],
+  groupId: string | null,
+  expectedRemovals = 0
+): Promise<void> {
+  if (studentIds.length === 0) return;
+
+  if (groupId) {
+    const rows = studentIds.map((student_id) => ({ group_id: groupId, student_id }));
+    const { error: insertError } = await supabase
+      .from("group_members")
+      .upsert(rows, { onConflict: "group_id,student_id", ignoreDuplicates: true });
+    if (insertError) throw insertError;
+  }
+
+  let removal = supabase.from("group_members").delete().in("student_id", studentIds);
+  if (groupId) removal = removal.neq("group_id", groupId);
+  const { data: removed, error: deleteError } = await removal.select("student_id");
+  if (deleteError) throw deleteError;
+
+  if ((removed?.length ?? 0) < expectedRemovals) {
+    throw new Error(
+      "Eski guruhdan chiqarib bo'lmadi. Supabase'da docs/teacher-members-schema.sql ni ishga tushirganingizni tekshiring."
+    );
+  }
 }

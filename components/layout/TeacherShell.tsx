@@ -33,10 +33,13 @@ export function TeacherShell({ children }: { children: React.ReactNode }) {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-colors ${
-                isActive(href) ? "bg-brand-soft text-foreground" : "text-muted hover:bg-black/[0.04] hover:text-foreground"
+              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm transition-colors ${
+                isActive(href)
+                  ? "bg-brand-soft text-foreground font-bold"
+                  : "text-muted font-medium hover:bg-black/[0.04] hover:text-foreground"
               }`}
             >
+              {isActive(href) && <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-full bg-brand" />}
               <Icon size={18} strokeWidth={2.25} />
               {label}
             </Link>

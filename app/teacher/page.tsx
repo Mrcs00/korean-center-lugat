@@ -101,9 +101,14 @@ function Metric({
 }) {
   return (
     <Card className="p-4">
-      <Icon size={16} className="text-muted mb-2" />
-      <p className={`text-2xl font-extrabold ${accent ? "text-red" : ""}`}>{value}</p>
-      <p className="text-[11px] text-muted mt-0.5">{label}</p>
+      <div
+        className="h-9 w-9 rounded-xl flex items-center justify-center mb-3"
+        style={{ background: accent ? "var(--red-soft)" : "var(--brand-soft)" }}
+      >
+        <Icon size={18} className={accent ? "text-red" : "text-brand-darker"} />
+      </div>
+      <p className={`text-2xl font-extrabold leading-none ${accent ? "text-red" : ""}`}>{value}</p>
+      <p className="text-[11px] text-muted mt-1.5">{label}</p>
     </Card>
   );
 }

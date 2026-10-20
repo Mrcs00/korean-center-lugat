@@ -38,7 +38,6 @@ export default function RegisterPage() {
           return;
         }
         setGroups(data ?? []);
-        if (data && data.length > 0) setGroupId(data[0].id);
       });
   }, []);
 
@@ -134,7 +133,9 @@ export default function RegisterPage() {
               onChange={(e) => setGroupId(e.target.value)}
               className="mt-1.5 w-full h-11 rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
             >
-              {groups.length === 0 && <option value="">Guruhlar yuklanmoqda...</option>}
+              <option value="" disabled>
+                {groups.length === 0 ? "Guruhlar yuklanmoqda..." : "Guruhni tanlang"}
+              </option>
               {groups.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}

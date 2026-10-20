@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { UsersRound, Plus, X, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { UsersRound, Plus, X, Trash2, UserX, ArrowRight } from "lucide-react";
 import { TeacherShell } from "@/components/layout/TeacherShell";
 import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
 import { supabase } from "@/lib/supabase/client";
+import { groupColor, masteryColor } from "@/lib/utils/groupColor";
 
 export default function TeacherGroupsPage() {
   const { status, students, groups, errorMessage, refresh } = useTeacherData();
@@ -60,7 +62,7 @@ export default function TeacherGroupsPage() {
   return (
     <TeacherShell>
       <TeacherGate status={status} errorMessage={errorMessage} onRetry={refresh}>
-        <div className="max-w-3xl mx-auto px-5 md:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-5 md:px-8 py-8">
           <div className="flex items-center justify-between mb-1">
             <h1 className="text-2xl font-extrabold tracking-tight">Guruhlar</h1>
             <Button size="sm" onClick={() => setFormOpen(true)}>
@@ -75,49 +77,96 @@ export default function TeacherGroupsPage() {
             </Card>
           )}
 
-          <div className="flex flex-col gap-3">
+          {students.some((st) => !st.groupId) && (
+            <Link href="/teacher/students?filter=none" className="block mb-4">
+              <Card className="p-4 flex items-center justify-between border-red/30 bg-red-soft hover:border-red/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-surface flex items-center justify-center">
+                    <UserX size={18} className="text-red" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-red">
+                      {students.filter((st) => !st.groupId).length} ta o'quvchi guruhsiz
+                    </p>
+                    <p className="text-xs text-muted">Ularni to'g'ri guruhlarga taqsimlash</p>
+                  </div>
+                </div>
+                <ArrowRight size={18} className="text-red" />
+              </Card>
+            </Link>
+          )}
+
+          <div className="grid sm:grid-cols-2 gap-4">
             {groups.map((group) => {
-              const members = students.filter((s) => s.group === group.name);
+              const members = students.filter((s) => s.groupId === group.id);
               const avgMastery =
                 members.length > 0
                   ? Math.round(members.reduce((s, m) => s + m.masteryPercent, 0) / members.length)
                   : 0;
+              const tone = groupColor(group.name);
               return (
-                <Card key={group.id} className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-2xl bg-brand-soft flex items-center justify-center">
-                        <UsersRound size={20} className="text-brand-darker" />
+                <Card key={group.id} className="p-5 relative overflow-hidden hover:border-border-strong">
+                  <div className="absolute inset-x-0 top-0 h-1" style={{ background: tone.dot }} />
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0"
+                        style={{ background: tone.bg, color: tone.fg }}
+                      >
+                        <UsersRound size={22} />
                       </div>
-                      <div>
-                        <p className="font-bold">{group.name}</p>
-                        <p className="text-xs text-muted">
-                          {members.length} ta o'quvchi
-                          {members.length > 0 && ` · o'rtacha ${avgMastery}%`}
-                        </p>
+                      <div className="min-w-0">
+                        <p className="font-bold truncate">{group.name}</p>
+                        <p className="text-xs text-muted">{members.length} ta o'quvchi</p>
                       </div>
                     </div>
                     <button
                       onClick={() => setGroupToDelete({ id: group.id, name: group.name })}
                       title="Guruhni o'chirish"
-                      className="h-9 w-9 flex items-center justify-center rounded-xl text-muted hover:text-red hover:bg-red-soft transition-colors"
+                      className="h-9 w-9 flex items-center justify-center rounded-xl text-muted hover:text-red hover:bg-red-soft transition-colors shrink-0"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
-                  {members.length > 0 && (
+
+                  <div className="flex items-center justify-between text-[11px] mb-1.5">
+                    <span className="text-muted">O'rtacha progress</span>
+                    <span className="font-bold" style={{ color: masteryColor(avgMastery) }}>
+                      {avgMastery}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-black/[0.06] overflow-hidden mb-4">
+                    <div
+                      className="h-full rounded-full transition-[width] duration-700"
+                      style={{ width: `${avgMastery}%`, background: masteryColor(avgMastery) }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <div className="flex -space-x-2">
-                      {members.map((m) => (
+                      {members.slice(0, 6).map((m) => (
                         <div
                           key={m.id}
                           title={m.fullName}
-                          className="h-8 w-8 rounded-full bg-brand-soft border-2 border-surface flex items-center justify-center text-xs font-bold"
+                          className="h-8 w-8 rounded-full border-2 border-surface flex items-center justify-center text-xs font-bold"
+                          style={{ background: tone.bg, color: tone.fg }}
                         >
-                          {m.fullName.charAt(0)}
+                          {m.fullName.charAt(0).toUpperCase()}
                         </div>
                       ))}
+                      {members.length > 6 && (
+                        <div className="h-8 w-8 rounded-full border-2 border-surface bg-black/[0.06] flex items-center justify-center text-[11px] font-bold text-muted">
+                          +{members.length - 6}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <Link
+                      href={`/teacher/students?filter=${group.id}`}
+                      className="text-xs font-semibold text-brand-dark hover:underline"
+                    >
+                      Ko'rish →
+                    </Link>
+                  </div>
                 </Card>
               );
             })}
