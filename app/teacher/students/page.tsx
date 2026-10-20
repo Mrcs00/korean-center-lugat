@@ -3,13 +3,14 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, Check, ChevronRight, Search, UserX, Users, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Search, Trash2, UserX, Users, X } from "lucide-react";
 import { TeacherShell } from "@/components/layout/TeacherShell";
 import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
-import { moveStudentsToGroup } from "@/lib/services/teacherService";
+import { deleteStudents, moveStudentsToGroup } from "@/lib/services/teacherService";
+import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
 
 function errorText(e: unknown): string {
@@ -25,6 +26,9 @@ function StudentsContent() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState(""); // "" = not chosen, "none" = remove from group, else groupId
   const [moving, setMoving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const noGroupCount = students.filter((s) => !s.groupId).length;
@@ -86,6 +90,30 @@ function StudentsContent() {
       setMoving(false);
     }
   };
+
+  const handleDelete = async () => {
+    const ids = [...selected];
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const deleted = await deleteStudents(ids);
+      setConfirmDelete(false);
+      setSelected(new Set());
+      setTarget("");
+      setNotice(
+        deleted === ids.length
+          ? { kind: "ok", text: `${deleted} ta akkaunt o'chirildi.` }
+          : { kind: "err", text: `${ids.length} tadan ${deleted} tasi o'chirildi.` }
+      );
+      refresh();
+    } catch (e) {
+      setDeleteError(errorText(e));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const selectedStudents = students.filter((s) => selected.has(s.id));
 
   const chip = (active: boolean) =>
     `shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors ${
@@ -278,6 +306,16 @@ function StudentsContent() {
               <Button size="sm" disabled={!target || moving} onClick={handleMove}>
                 {moving ? "Ko'chirilmoqda..." : "Ko'chirish"}
               </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => {
+                  setDeleteError(null);
+                  setConfirmDelete(true);
+                }}
+              >
+                <Trash2 size={14} /> O'chirish
+              </Button>
               <button
                 onClick={() => setSelected(new Set())}
                 aria-label="Tanlovni bekor qilish"
@@ -288,6 +326,29 @@ function StudentsContent() {
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          open={confirmDelete}
+          title="Akkauntlarni o'chirish"
+          confirmLabel={`${selectedStudents.length} ta o'chirish`}
+          busy={deleting}
+          error={deleteError}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        >
+          <p>
+            <span className="font-semibold text-foreground">{selectedStudents.length} ta</span> akkaunt va ularning
+            barcha progressi, imtihonlari butunlay o'chadi. Bu amalni qaytarib bo'lmaydi.
+          </p>
+          <ul className="mt-3 max-h-36 overflow-y-auto flex flex-col gap-1">
+            {selectedStudents.slice(0, 8).map((s) => (
+              <li key={s.id} className="text-foreground">
+                {s.fullName} <span className="text-muted">@{s.username}</span>
+              </li>
+            ))}
+            {selectedStudents.length > 8 && <li className="text-muted">...va yana {selectedStudents.length - 8} ta</li>}
+          </ul>
+        </ConfirmDialog>
       </TeacherGate>
     </TeacherShell>
   );

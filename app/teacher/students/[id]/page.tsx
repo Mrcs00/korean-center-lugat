@@ -1,22 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { TeacherShell } from "@/components/layout/TeacherShell";
 import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
 import { VOCAB_SETS } from "@/lib/data/seed";
-import { moveStudentsToGroup, RealStudent } from "@/lib/services/teacherService";
+import { deleteStudents, moveStudentsToGroup, RealStudent } from "@/lib/services/teacherService";
+import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
 
 export default function TeacherStudentDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { status, students, groups, errorMessage, refresh } = useTeacherData();
   const student = students.find((s) => s.id === params.id);
+
+  const handleDelete = async () => {
+    if (!student) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const deleted = await deleteStudents([student.id]);
+      if (deleted < 1) throw new Error("Akkauntni o'chirib bo'lmadi.");
+      router.push("/teacher/students");
+    } catch (e) {
+      setDeleteError((e as { message?: string } | null)?.message ?? "O'chirib bo'lmadi. Qayta urinib ko'ring.");
+      setDeleting(false);
+    }
+  };
 
   return (
     <TeacherShell>
@@ -139,6 +158,37 @@ export default function TeacherStudentDetailPage() {
                   </div>
                 )}
               </Card>
+
+              <Card className="p-5 mt-4 border-red/25">
+                <p className="text-xs font-semibold text-red uppercase tracking-wide mb-2">Xavfli zona</p>
+                <p className="text-sm text-muted mb-3">
+                  Akkaunt va uning barcha progressi butunlay o'chadi. Qaytarib bo'lmaydi.
+                </p>
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    setDeleteError(null);
+                    setConfirmDelete(true);
+                  }}
+                >
+                  <Trash2 size={16} /> Akkauntni o'chirish
+                </Button>
+              </Card>
+
+              <ConfirmDialog
+                open={confirmDelete}
+                title="Akkauntni o'chirish"
+                confirmLabel="O'chirish"
+                busy={deleting}
+                error={deleteError}
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmDelete(false)}
+              >
+                <p>
+                  <span className="font-semibold text-foreground">{student.fullName}</span> (@{student.username})
+                  akkaunti va uning barcha progressi, imtihonlari butunlay o'chadi. Bu amalni qaytarib bo'lmaydi.
+                </p>
+              </ConfirmDialog>
             </>
           )}
         </div>

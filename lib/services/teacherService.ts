@@ -158,3 +158,23 @@ export async function moveStudentsToGroup(
     );
   }
 }
+
+/**
+ * Permanently deletes student accounts (login + profile + all progress).
+ * Runs the server-side `delete_students` function from
+ * docs/teacher-delete-student.sql, which only lets a teacher delete students.
+ * Returns how many accounts were actually deleted.
+ */
+export async function deleteStudents(studentIds: string[]): Promise<number> {
+  if (studentIds.length === 0) return 0;
+  const { data, error } = await supabase.rpc("delete_students", { student_ids: studentIds });
+  if (error) {
+    if (error.message.includes("delete_students")) {
+      throw new Error(
+        "O'chirish funksiyasi topilmadi. Supabase'da docs/teacher-delete-student.sql ni ishga tushiring."
+      );
+    }
+    throw error;
+  }
+  return Number(data ?? 0);
+}
