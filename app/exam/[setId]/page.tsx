@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
@@ -22,9 +22,19 @@ import {
 } from "@/lib/services/examSession";
 import { supabase } from "@/lib/supabase/client";
 import { ExamAnswer, ExamAttempt } from "@/lib/types";
+import { parseRange } from "@/lib/utils/examSets";
 
 export default function ExamRunnerPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExamRunnerContent />
+    </Suspense>
+  );
+}
+
+function ExamRunnerContent() {
   const params = useParams<{ setId: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { recordExamAttempt, reviewWord } = useStore();
   const [phase, setPhase] = useState<"loading" | "intro" | "running">("loading");
@@ -39,6 +49,9 @@ export default function ExamRunnerPage() {
   const set = VOCAB_SETS.find((s) => s.id === params.setId);
   // Exam questions follow the set's own word order (no shuffling).
   const words = VOCAB_WORDS.filter((w) => w.setId === params.setId).sort((a, b) => a.order - b.order);
+
+  // A teacher's assignment can open this page with ?from=&to= to prefill the range.
+  const presetRange = parseRange(searchParams.get("from"), searchParams.get("to"), words.length) ?? undefined;
 
   // Look for an unfinished exam for this user + set.
   useEffect(() => {
@@ -160,6 +173,7 @@ export default function ExamRunnerPage() {
                 <CountPicker
                   total={words.length}
                   withRange
+                  initialRange={presetRange}
                   confirmLabel="Imtihonni boshlash"
                   onConfirm={startFromPicker}
                 />

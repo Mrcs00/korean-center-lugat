@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { QuizEngine, QuizResultEntry } from "@/components/study/QuizEngine";
 import { CountPicker } from "@/components/study/CountPicker";
+import { parseRange } from "@/lib/utils/examSets";
 import { useStore } from "@/lib/store/progressStore";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
 import { buildQuiz } from "@/lib/services/quizService";
@@ -66,6 +67,7 @@ function QuizContent() {
             withRange
             withQuestionCount
             defaultQuestions={10}
+            initialRange={parseRange(params.get("from"), params.get("to"), words.length) ?? undefined}
             confirmLabel="Testni boshlash"
             onConfirm={({ from, to, questions: q }) => setConfig({ from, to, questions: q })}
           />

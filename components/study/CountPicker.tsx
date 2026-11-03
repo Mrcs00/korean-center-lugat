@@ -30,6 +30,7 @@ export function CountPicker({
   withRange = false,
   withQuestionCount = false,
   defaultQuestions = 10,
+  initialRange,
   confirmLabel,
   onConfirm,
 }: {
@@ -39,14 +40,16 @@ export function CountPicker({
   /** Adds a separate "how many questions" field (limited by the chosen words). */
   withQuestionCount?: boolean;
   defaultQuestions?: number;
+  /** Start in "from–to" mode with this range filled in (e.g. from a teacher's assignment). */
+  initialRange?: { from: number; to: number };
   confirmLabel: string;
   onConfirm: (selection: CountSelection) => void;
 }) {
   const initial = Math.min(defaultCount ?? total, total);
-  const [mode, setMode] = useState<"first" | "range">("first");
+  const [mode, setMode] = useState<"first" | "range">(withRange && initialRange ? "range" : "first");
   const [countText, setCountText] = useState(String(initial));
-  const [fromText, setFromText] = useState("1");
-  const [toText, setToText] = useState(String(Math.min(100, total)));
+  const [fromText, setFromText] = useState(String(initialRange?.from ?? 1));
+  const [toText, setToText] = useState(String(initialRange?.to ?? Math.min(100, total)));
   const [questionsText, setQuestionsText] = useState(String(Math.min(defaultQuestions, initial)));
 
   const presets = PRESETS.filter((p) => p < total);

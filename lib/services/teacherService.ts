@@ -3,6 +3,24 @@ import { VOCAB_WORDS } from "../data/seed";
 import { masteredCount as computeMasteredCount } from "./statsService";
 import { VocabularyProgress } from "../types";
 
+export interface ExamAttemptSummary {
+  id: string;
+  setId: string;
+  correct: number;
+  total: number;
+  wrong: number;
+  skipped: number;
+  startedAt: string;
+}
+
+export interface WrongAnswerDetail {
+  wordId: string;
+  koreanWord: string;
+  uzbekTranslation: string;
+  correctAnswer: string;
+  studentAnswer: string | null;
+}
+
 export interface RealStudent {
   id: string;
   fullName: string;
@@ -15,6 +33,7 @@ export interface RealStudent {
   lastExamSetId: string | null;
   lastExamScore: string | null;
   avgExamScore: number | null;
+  attempts: ExamAttemptSummary[]; // every exam the student took, newest first
 }
 
 const wordById = new Map(VOCAB_WORDS.map((w) => [w.id, w]));
@@ -33,7 +52,7 @@ export async function fetchRealStudents(): Promise<RealStudent[]> {
       supabase.from("vocabulary_progress").select("student_id, word_id, mastery_level, wrong_count"),
       supabase
         .from("exam_attempts")
-        .select("student_id, set_id, correct_count, total_questions, started_at")
+        .select("id, student_id, set_id, correct_count, wrong_count, skipped_count, total_questions, started_at")
         .order("started_at", { ascending: false }),
     ]);
 
@@ -113,6 +132,15 @@ export async function fetchRealStudents(): Promise<RealStudent[]> {
       lastExamSetId: lastAttempt?.set_id ?? null,
       lastExamScore: lastAttempt ? `${lastAttempt.correct_count}/${lastAttempt.total_questions}` : null,
       avgExamScore,
+      attempts: studentAttempts.map((a) => ({
+        id: a!.id,
+        setId: a!.set_id,
+        correct: a!.correct_count,
+        total: a!.total_questions,
+        wrong: a!.wrong_count ?? 0,
+        skipped: a!.skipped_count ?? 0,
+        startedAt: a!.started_at,
+      })),
     };
   });
 }
@@ -177,4 +205,33 @@ export async function deleteStudents(studentIds: string[]): Promise<number> {
     throw error;
   }
   return Number(data ?? 0);
+}
+
+/**
+ * The questions a student got wrong in one exam attempt (loaded on demand
+ * when the teacher opens that attempt). Teachers may read exam_answers — see
+ * docs/teacher-schema.sql.
+ */
+export async function fetchAttemptWrongAnswers(attemptId: string): Promise<WrongAnswerDetail[]> {
+  const { data, error } = await supabase
+    .from("exam_answers")
+    .select("word_id, question_type, is_correct, student_answer")
+    .eq("attempt_id", attemptId);
+  if (error) throw error;
+
+  return (data ?? [])
+    .filter((a) => !a.is_correct)
+    .map((a) => {
+      const word = wordById.get(a.word_id);
+      // Questions asked for the Uzbek meaning have the Uzbek as the right
+      // answer; the others (uz→kr, typing, fill-in) expect the Korean word.
+      const wantsUzbek = a.question_type === "kr_to_uz" || a.question_type === "listening";
+      return {
+        wordId: a.word_id,
+        koreanWord: word?.koreanWord ?? a.word_id,
+        uzbekTranslation: word?.uzbekTranslation ?? "",
+        correctAnswer: (wantsUzbek ? word?.uzbekTranslation : word?.koreanWord) ?? "",
+        studentAnswer: a.student_answer ?? null,
+      };
+    });
 }

@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Target, Clock, ChevronRight } from "lucide-react";
+import { Users, Target, Clock, BookOpenCheck, Layers, ListChecks, GraduationCap } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useStore } from "@/lib/store/progressStore";
 import { RealAssignment, fetchAssignmentsForGroup } from "@/lib/services/assignmentService";
 import { MOCK_STUDENTS } from "@/lib/data/teacherMock";
-import { VOCAB_SETS } from "@/lib/data/seed";
-import { setProgressPercent } from "@/lib/services/statsService";
+import { examSetTitle, rangeLabel, rangeProgressPercent } from "@/lib/utils/examSets";
 import { supabase } from "@/lib/supabase/client";
 
 interface RealGroupmate {
@@ -19,7 +18,7 @@ interface RealGroupmate {
 }
 
 export default function GroupsPage() {
-  const { profile, progress } = useStore();
+  const { profile, progress, examAttempts } = useStore();
 
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [realGroupId, setRealGroupId] = useState<string | null>(null);
@@ -132,33 +131,82 @@ export default function GroupsPage() {
         ) : (
           <div className="flex flex-col gap-2 mb-4">
             {myAssignments.map((a) => {
-              const set = VOCAB_SETS.find((s) => s.id === a.setId);
-              const pct = setProgressPercent(a.setId, progress);
-              const met = pct >= a.minimumMastery;
+              const title = examSetTitle(a.setId);
+              const isBookExam = a.kind === "book_exam" && a.bookId;
+              const hasRange = Boolean(a.wordFrom && a.wordTo);
+              const rangeQuery = hasRange ? `&from=${a.wordFrom}&to=${a.wordTo}` : "";
+
+              // Book exam: done when the best attempt reaches the pass score.
+              const attempts = examAttempts.filter((x) => x.setId === a.setId);
+              const bestScore = attempts.reduce(
+                (best, x) => Math.max(best, Math.round((x.correctCount / Math.max(x.totalQuestions, 1)) * 100)),
+                0
+              );
+              const pct = isBookExam ? bestScore : rangeProgressPercent(a.setId, a.wordFrom, a.wordTo, progress);
+              const met = pct >= a.minimumMastery && (!isBookExam || attempts.length > 0);
+
+              const actionCls =
+                "flex-1 h-10 rounded-xl border border-border bg-background hover:border-border-strong text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors";
+
               return (
-                <Link key={a.id} href={set ? `/vocabulary/${set.id}` : "/vocabulary"}>
-                  <Card interactive className="p-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 min-w-0">
+                <Card key={a.id} className="p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {isBookExam ? (
+                        <BookOpenCheck size={15} className="text-brand-darker shrink-0" />
+                      ) : (
                         <Target size={15} className="text-brand-darker shrink-0" />
-                        <span className="font-kr font-semibold truncate">{set?.title ?? a.setId}</span>
-                      </div>
-                      <ChevronRight size={16} className="text-muted shrink-0" />
+                      )}
+                      <span className="font-kr font-semibold truncate">{title}</span>
                     </div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-muted flex items-center gap-1">
-                        <Clock size={12} /> Muddat: {a.deadline ?? "Muddatsiz"}
+                    {isBookExam ? (
+                      <span className="text-[11px] font-semibold bg-brand-soft text-brand-darker rounded-full px-2.5 py-1 shrink-0">
+                        {a.questionCount ?? 50} ta savol
                       </span>
-                      <span className={`text-xs font-bold ${met ? "text-green" : "text-brand-darker"}`}>
-                        {pct}% {met && "✓"}
-                      </span>
-                    </div>
-                    <ProgressBar value={pct} max={100} />
-                    <p className="text-[11px] text-muted-soft mt-2">
-                      Talab qilingan: {a.minimumMastery}%{met ? " — bajarildi!" : ""}
-                    </p>
-                  </Card>
-                </Link>
+                    ) : (
+                      hasRange && (
+                        <span className="text-[11px] font-semibold bg-brand-soft text-brand-darker rounded-full px-2.5 py-1 shrink-0">
+                          {rangeLabel(a.wordFrom!, a.wordTo!)}
+                        </span>
+                      )
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted flex items-center gap-1">
+                      <Clock size={12} /> Muddat: {a.deadline ?? "Muddatsiz"}
+                    </span>
+                    <span className={`text-xs font-bold ${met ? "text-green" : "text-brand-darker"}`}>
+                      {isBookExam && attempts.length === 0 ? "Topshirilmagan" : `${pct}%`} {met && "✓"}
+                    </span>
+                  </div>
+                  <ProgressBar value={pct} max={100} />
+                  <p className="text-[11px] text-muted-soft mt-2">
+                    {isBookExam ? "O'tish bali" : "Talab qilingan"}: {a.minimumMastery}%{met ? " — bajarildi!" : ""}
+                  </p>
+
+                  <div className="flex gap-2 mt-4">
+                    {isBookExam ? (
+                      <Link href={`/exam/seoul-hangugo/${a.bookId}/umumiy`} className={`${actionCls} bg-brand-soft border-transparent`}>
+                        <GraduationCap size={14} /> Imtihonni boshlash
+                      </Link>
+                    ) : (
+                      <>
+                        <Link href={`/flashcards?set=${a.setId}${rangeQuery}`} className={actionCls}>
+                          <Layers size={14} /> Flashcard
+                        </Link>
+                        <Link href={`/quiz?set=${a.setId}${rangeQuery}`} className={actionCls}>
+                          <ListChecks size={14} /> Test
+                        </Link>
+                        <Link
+                          href={`/exam/${a.setId}${hasRange ? `?from=${a.wordFrom}&to=${a.wordTo}` : ""}`}
+                          className={actionCls}
+                        >
+                          <GraduationCap size={14} /> Imtihon
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </Card>
               );
             })}
           </div>

@@ -8,7 +8,9 @@ export interface QuizQuestion {
   correctAnswer: string;
 }
 
-const TYPES: QuizType[] = ["kr_to_uz", "uz_to_kr", "typing", "listening", "context"];
+// "listening" (audio) questions are intentionally left out: students found
+// the spoken questions confusing. The type still exists so old results load.
+const TYPES: QuizType[] = ["kr_to_uz", "uz_to_kr", "typing", "context"];
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];

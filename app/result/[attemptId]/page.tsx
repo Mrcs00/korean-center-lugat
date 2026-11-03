@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { AppShell } from "@/components/layout/AppShell";
 import { CircularScore } from "@/components/study/CircularScore";
 import { useStore } from "@/lib/store/progressStore";
-import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
+import { VOCAB_WORDS } from "@/lib/data/seed";
+import { examSetTitle } from "@/lib/utils/examSets";
 
 export default function ExamResultPage() {
   const params = useParams<{ attemptId: string }>();
@@ -28,7 +29,6 @@ export default function ExamResultPage() {
     );
   }
 
-  const set = VOCAB_SETS.find((s) => s.id === attempt.setId);
   const percent = Math.round((attempt.correctCount / attempt.totalQuestions) * 100);
   const emoji = percent >= 90 ? "🎉" : percent >= 70 ? "👍" : percent >= 50 ? "💪" : "📚";
   const label = percent >= 90 ? "A'lo!" : percent >= 70 ? "Yaxshi!" : percent >= 50 ? "Yomon emas" : "Ko'proq mashq kerak";
@@ -43,7 +43,7 @@ export default function ExamResultPage() {
       <div className="max-w-lg mx-auto px-5 py-10">
         <Card elevation="md" className="p-8 text-center mb-6">
           <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">
-            {set?.title ?? attempt.setId} Vocabulary Exam
+            {examSetTitle(attempt.setId)} Vocabulary Exam
           </p>
           <p className="font-kr text-sm text-muted-soft mb-5">
             {attempt.correctCount} / {attempt.totalQuestions}

@@ -9,10 +9,10 @@ import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
-import { VOCAB_SETS } from "@/lib/data/seed";
 import { deleteStudents, moveStudentsToGroup, RealStudent } from "@/lib/services/teacherService";
 import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
+import { ExamHistory } from "@/components/teacher/ExamHistory";
 
 export default function TeacherStudentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -117,24 +117,7 @@ export default function TeacherStudentDetailPage() {
                 onDone={refresh}
               />
 
-              <Card className="p-5 mb-4">
-                <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">
-                  Imtihonlar
-                </p>
-                {student.lastExamScore ? (
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">
-                      {VOCAB_SETS.find((s) => s.id === student.lastExamSetId)?.title ?? student.lastExamSetId}
-                    </span>
-                    <span className="text-xl font-extrabold text-brand-dark">{student.lastExamScore}</span>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted">Hali imtihon topshirmagan.</p>
-                )}
-                {student.avgExamScore !== null && (
-                  <p className="text-xs text-muted mt-2">O'rtacha ball: {student.avgExamScore}%</p>
-                )}
-              </Card>
+              <ExamHistory attempts={student.attempts} />
 
               <Card className="p-5">
                 <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -11,6 +11,7 @@ import { useStore } from "@/lib/store/progressStore";
 import { useMemoryShortcuts } from "@/lib/hooks/useMemoryShortcuts";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
 import { SelfRating } from "@/lib/types";
+import { parseRange, rangeLabel } from "@/lib/utils/examSets";
 
 function FlashcardsContent() {
   const params = useSearchParams();
@@ -20,7 +21,14 @@ function FlashcardsContent() {
   const [index, setIndex] = useState(0);
 
   const set = VOCAB_SETS.find((s) => s.id === setId);
-  const words = VOCAB_WORDS.filter((w) => w.setId === setId).sort((a, b) => a.order - b.order);
+  const fromParam = params.get("from");
+  const toParam = params.get("to");
+  // A teacher's assignment can limit the cards to a range, e.g. ?from=100&to=170.
+  const { words, range } = useMemo(() => {
+    const all = VOCAB_WORDS.filter((w) => w.setId === setId).sort((a, b) => a.order - b.order);
+    const r = parseRange(fromParam, toParam, all.length);
+    return { words: r ? all.slice(r.from - 1, r.to) : all, range: r };
+  }, [setId, fromParam, toParam]);
   const word = words[index];
 
   const handleRate = useCallback(
@@ -56,6 +64,7 @@ function FlashcardsContent() {
           <ArrowLeft size={20} />
         </Link>
         <span className="text-sm font-semibold text-muted">
+          {range && <span className="text-brand-darker mr-2">{rangeLabel(range.from, range.to)}</span>}
           {index + 1} / {words.length}
         </span>
       </div>

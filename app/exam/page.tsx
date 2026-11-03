@@ -5,7 +5,7 @@ import { ChevronRight, History, GraduationCap } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { useStore } from "@/lib/store/progressStore";
-import { VOCAB_SETS } from "@/lib/data/seed";
+import { examSetTitle } from "@/lib/utils/examSets";
 
 export default function ExamHomePage() {
   const { examAttempts } = useStore();
@@ -59,7 +59,7 @@ export default function ExamHomePage() {
                 <Link key={a.id} href={`/result/${a.id}`}>
                   <Card className="p-4 flex items-center justify-between hover:border-foreground/15 transition-colors">
                     <span className="font-kr text-sm font-semibold">
-                      {VOCAB_SETS.find((s) => s.id === a.setId)?.title ?? a.setId}
+                      {examSetTitle(a.setId)}
                     </span>
                     <span className="text-sm font-bold text-brand-dark">
                       {a.correctCount}/{a.totalQuestions}
