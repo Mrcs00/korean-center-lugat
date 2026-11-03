@@ -22,6 +22,8 @@ export default function TeacherStudentDetailPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { status, students, groups, errorMessage, refresh } = useTeacherData();
   const student = students.find((s) => s.id === params.id);
+  // Back goes to this student's group (or the "no group" list), not the groups overview.
+  const backHref = student ? `/teacher/students?filter=${student.groupId ?? "none"}` : "/teacher/students";
 
   const handleDelete = async () => {
     if (!student) return;
@@ -42,10 +44,10 @@ export default function TeacherStudentDetailPage() {
       <TeacherGate status={status} errorMessage={errorMessage} onRetry={refresh}>
         <div className="max-w-2xl mx-auto px-5 md:px-8 py-8">
           <Link
-            href="/teacher/students"
+            href={backHref}
             className="inline-flex items-center gap-1 text-sm text-muted mb-4 hover:text-foreground"
           >
-            <ArrowLeft size={16} /> O'quvchilar
+            <ArrowLeft size={16} /> {student?.group ?? "O'quvchilar"}
           </Link>
 
           {!student ? (
@@ -63,16 +65,21 @@ export default function TeacherStudentDetailPage() {
                   }}
                 />
                 <div className="px-6 pb-6">
-                  <div className="-mt-9 flex items-end gap-4 mb-5">
+                  <div className="-mt-9 flex items-start gap-4 mb-5">
                     <div
                       className="h-[72px] w-[72px] rounded-full border-4 border-surface flex items-center justify-center text-3xl font-extrabold shrink-0"
-                      style={{ background: groupColor(student.group).bg, color: groupColor(student.group).fg }}
+                      style={{
+                        backgroundColor: "var(--surface)",
+                        backgroundImage: `linear-gradient(${groupColor(student.group).bg}, ${groupColor(student.group).bg})`,
+                        color: groupColor(student.group).fg,
+                      }}
                     >
                       {student.fullName.charAt(0).toUpperCase()}
                     </div>
-                    <div className="pb-1 min-w-0">
+                    {/* mt-10 keeps the name below the colour banner (the avatar overlaps it by 36px) */}
+                    <div className="mt-10 min-w-0">
                       <h1 className="text-xl font-extrabold tracking-tight truncate">{student.fullName}</h1>
-                      <p className="text-sm text-muted">@{student.username}</p>
+                      <p className="text-sm text-muted truncate">@{student.username.replace(/^@+/, "")}</p>
                     </div>
                   </div>
 

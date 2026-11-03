@@ -2,26 +2,45 @@
 
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { AlertTriangle, Check, ChevronRight, Search, Trash2, UserX, Users, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  Search,
+  Trash2,
+  UserX,
+  Users,
+  UsersRound,
+  X,
+} from "lucide-react";
 import { TeacherShell } from "@/components/layout/TeacherShell";
 import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
 import { deleteStudents, moveStudentsToGroup } from "@/lib/services/teacherService";
-import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
 
 function errorText(e: unknown): string {
   return (e as { message?: string } | null)?.message ?? "Ko'chirib bo'lmadi. Qayta urinib ko'ring.";
 }
 
+// Logins sometimes already start with "@"; show exactly one.
+function handle(username: string): string {
+  return `@${username.replace(/^@+/, "")}`;
+}
+
 function StudentsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { status, students, groups, errorMessage, refresh } = useTeacherData();
 
-  const [filter, setFilter] = useState<string>(searchParams.get("filter") ?? "all"); // all | none | <groupId>
+  // null = the groups overview; "none" or a group id = that group's students.
+  const filter = searchParams.get("filter");
+
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState(""); // "" = not chosen, "none" = remove from group, else groupId
@@ -34,17 +53,34 @@ function StudentsContent() {
   const noGroupCount = students.filter((s) => !s.groupId).length;
   const atRiskCount = students.filter((s) => s.masteryPercent < 20).length;
 
+  const q = query.trim().toLowerCase();
+  const searching = q.length > 0;
+  const currentGroup = filter && filter !== "none" ? groups.find((g) => g.id === filter) : undefined;
+  const mode: "groups" | "list" = filter || searching ? "list" : "groups";
+
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return students.filter((s) => {
-      if (filter === "none" && s.groupId) return false;
-      if (filter !== "all" && filter !== "none" && s.groupId !== filter) return false;
+      // While searching, look through every group at once.
+      if (!searching && filter === "none" && s.groupId) return false;
+      if (!searching && filter && filter !== "none" && s.groupId !== filter) return false;
       if (q && !s.fullName.toLowerCase().includes(q) && !s.username.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [students, filter, query]);
+  }, [students, filter, q, searching]);
 
   const allVisibleSelected = visible.length > 0 && visible.every((s) => selected.has(s.id));
+
+  const openGroup = (id: string) => {
+    setSelected(new Set());
+    setQuery("");
+    router.push(`/teacher/students?filter=${id}`);
+  };
+
+  const backToGroups = () => {
+    setSelected(new Set());
+    setQuery("");
+    router.push("/teacher/students");
+  };
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -115,36 +151,50 @@ function StudentsContent() {
 
   const selectedStudents = students.filter((s) => selected.has(s.id));
 
-  const chip = (active: boolean) =>
-    `shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors ${
-      active
-        ? "bg-foreground text-background border-foreground"
-        : "bg-surface text-muted border-border hover:border-border-strong hover:text-foreground"
-    }`;
+  const listTitle = searching
+    ? "Qidiruv natijalari"
+    : filter === "none"
+    ? "Guruhsiz o'quvchilar"
+    : currentGroup?.name ?? "Guruh topilmadi";
 
   return (
     <TeacherShell>
       <TeacherGate status={status} errorMessage={errorMessage} onRetry={refresh}>
-        <div className="max-w-4xl mx-auto px-5 md:px-8 py-8 pb-32">
-          <h1 className="text-2xl font-extrabold tracking-tight mb-1">O'quvchilar</h1>
+        <div className="max-w-5xl mx-auto px-5 md:px-8 py-8 pb-32">
+          {mode === "list" && !searching && (
+            <button
+              onClick={backToGroups}
+              className="inline-flex items-center gap-1 text-sm text-muted mb-3 hover:text-foreground"
+            >
+              <ArrowLeft size={16} /> Guruhlar
+            </button>
+          )}
+
+          <h1 className="text-2xl font-extrabold tracking-tight mb-1">
+            {mode === "groups" ? "O'quvchilar" : listTitle}
+          </h1>
           <p className="text-sm text-muted mb-6">
-            Belgilab, bir nechta o'quvchini birdaniga to'g'ri guruhga ko'chirishingiz mumkin.
+            {mode === "groups"
+              ? "Guruhni tanlang yoki ism bo'yicha qidiring."
+              : "Belgilab, bir nechta o'quvchini birdaniga to'g'ri guruhga ko'chirishingiz mumkin."}
           </p>
 
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <StatTile icon={Users} label="Jami" value={students.length} tint="var(--brand-soft)" color="var(--brand-darker)" />
-            <StatTile
-              icon={UserX}
-              label="Guruhsiz"
-              value={noGroupCount}
-              tint="var(--red-soft)"
-              color="var(--red)"
-              onClick={() => setFilter("none")}
-            />
-            <StatTile icon={AlertTriangle} label="E'tibor talab" value={atRiskCount} tint="var(--amber-soft)" color="var(--amber)" />
-          </div>
+          {mode === "groups" && (
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <StatTile icon={Users} label="Jami" value={students.length} tint="var(--brand-soft)" color="var(--brand-darker)" />
+              <StatTile
+                icon={UserX}
+                label="Guruhsiz"
+                value={noGroupCount}
+                tint="var(--red-soft)"
+                color="var(--red)"
+                onClick={() => openGroup("none")}
+              />
+              <StatTile icon={AlertTriangle} label="E'tibor talab" value={atRiskCount} tint="var(--amber-soft)" color="var(--amber)" />
+            </div>
+          )}
 
-          <div className="relative mb-3">
+          <div className="relative mb-5">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-soft" />
             <input
               value={query}
@@ -152,26 +202,6 @@ function StudentsContent() {
               placeholder="Ism yoki login bo'yicha qidirish..."
               className="w-full h-11 rounded-2xl border border-border bg-surface pl-10 pr-4 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
             />
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-            <button className={chip(filter === "all")} onClick={() => setFilter("all")}>
-              Hammasi <span className="opacity-60">{students.length}</span>
-            </button>
-            {groups.map((g) => {
-              const tone = groupColor(g.name);
-              return (
-                <button key={g.id} className={chip(filter === g.id)} onClick={() => setFilter(g.id)}>
-                  <span className="h-2 w-2 rounded-full" style={{ background: tone.dot }} />
-                  {g.name}
-                  <span className="opacity-60">{students.filter((s) => s.groupId === g.id).length}</span>
-                </button>
-              );
-            })}
-            <button className={chip(filter === "none")} onClick={() => setFilter("none")}>
-              <span className="h-2 w-2 rounded-full" style={{ background: "var(--red)" }} />
-              Guruhsiz <span className="opacity-60">{noGroupCount}</span>
-            </button>
           </div>
 
           {notice && (
@@ -187,13 +217,107 @@ function StudentsContent() {
             </div>
           )}
 
-          {students.length === 0 ? (
+          {mode === "groups" ? (
+            groups.length === 0 && noGroupCount === 0 ? (
+              <Card className="p-8 text-center">
+                <p className="text-sm text-muted">Hali guruh yoki o&apos;quvchi yo&apos;q.</p>
+              </Card>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {groups.map((g) => {
+                  const members = students.filter((s) => s.groupId === g.id);
+                  const avg =
+                    members.length > 0
+                      ? Math.round(members.reduce((sum, m) => sum + m.masteryPercent, 0) / members.length)
+                      : 0;
+                  const tone = groupColor(g.name);
+                  return (
+                    <button key={g.id} onClick={() => openGroup(g.id)} className="text-left">
+                      <Card className="p-5 h-full relative overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] hover:border-border-strong">
+                        <div className="absolute inset-x-0 top-0 h-1" style={{ background: tone.dot }} />
+                        <div className="flex items-center gap-3 mb-4">
+                          <div
+                            className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0"
+                            style={{ background: tone.bg, color: tone.fg }}
+                          >
+                            <UsersRound size={22} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold truncate">{g.name}</p>
+                            <p className="text-xs text-muted">{members.length} ta o&apos;quvchi</p>
+                          </div>
+                          <ChevronRight size={18} className="text-muted shrink-0" />
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] mb-1.5">
+                          <span className="text-muted">O&apos;rtacha progress</span>
+                          <span className="font-bold" style={{ color: masteryColor(avg) }}>
+                            {avg}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-black/[0.06] overflow-hidden mb-4">
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${avg}%`, background: masteryColor(avg) }}
+                          />
+                        </div>
+
+                        <div className="flex -space-x-2 min-h-8">
+                          {members.slice(0, 6).map((m) => (
+                            <div
+                              key={m.id}
+                              className="h-8 w-8 rounded-full border-2 border-surface flex items-center justify-center text-xs font-bold"
+                              style={{ background: tone.bg, color: tone.fg }}
+                            >
+                              {m.fullName.charAt(0).toUpperCase()}
+                            </div>
+                          ))}
+                          {members.length > 6 && (
+                            <div className="h-8 w-8 rounded-full border-2 border-surface bg-black/[0.06] flex items-center justify-center text-[11px] font-bold text-muted">
+                              +{members.length - 6}
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    </button>
+                  );
+                })}
+
+                {noGroupCount > 0 && (
+                  <button onClick={() => openGroup("none")} className="text-left">
+                    <Card className="p-5 h-full bg-red-soft border-red/30 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-2xl bg-surface flex items-center justify-center shrink-0">
+                          <UserX size={22} className="text-red" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-red">Guruhsiz</p>
+                          <p className="text-xs text-muted">{noGroupCount} ta o&apos;quvchi</p>
+                        </div>
+                        <ChevronRight size={18} className="text-red shrink-0" />
+                      </div>
+                      <p className="text-xs text-muted mt-4">Ularni to&apos;g&apos;ri guruhlarga taqsimlang.</p>
+                    </Card>
+                  </button>
+                )}
+              </div>
+            )
+          ) : students.length === 0 ? (
             <Card className="p-8 text-center">
-              <p className="text-sm text-muted">Hali hech kim ro'yxatdan o'tmagan.</p>
+              <p className="text-sm text-muted">Hali hech kim ro&apos;yxatdan o&apos;tmagan.</p>
+            </Card>
+          ) : !searching && filter && filter !== "none" && !currentGroup ? (
+            <Card className="p-8 text-center">
+              <p className="text-sm text-muted mb-3">Bu guruh topilmadi (o&apos;chirilgan bo&apos;lishi mumkin).</p>
+              <button onClick={backToGroups} className="text-sm font-semibold text-brand-dark">
+                ← Guruhlarga qaytish
+              </button>
             </Card>
           ) : visible.length === 0 ? (
             <Card className="p-8 text-center">
-              <p className="text-sm text-muted">Bu filtr bo'yicha o'quvchi topilmadi.</p>
+              <p className="text-sm text-muted">
+                {searching ? "Hech kim topilmadi." : "Bu guruhda hozircha o'quvchi yo'q."}
+              </p>
             </Card>
           ) : (
             <>
@@ -202,7 +326,7 @@ function StudentsContent() {
                   <Checkbox checked={allVisibleSelected} />
                   {allVisibleSelected ? "Tanlovni bekor qilish" : `Hammasini tanlash (${visible.length})`}
                 </button>
-                <span className="text-xs text-muted-soft">{visible.length} ta o'quvchi</span>
+                <span className="text-xs text-muted-soft">{visible.length} ta o&apos;quvchi</span>
               </div>
 
               <div className="flex flex-col gap-2.5">
@@ -237,7 +361,7 @@ function StudentsContent() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-bold truncate">{s.fullName}</p>
-                          <p className="text-xs text-muted truncate">@{s.username}</p>
+                          <p className="text-xs text-muted truncate">{handle(s.username)}</p>
                           <span
                             className="sm:hidden mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
                             style={{ background: tone.bg, color: tone.fg }}
@@ -248,7 +372,7 @@ function StudentsContent() {
                       </Link>
 
                       <span
-                        className="hidden sm:inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap"
+                        className="hidden sm:inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap max-w-[11rem] truncate"
                         style={{ background: tone.bg, color: tone.fg }}
                       >
                         {s.group ?? "Guruhsiz"}
@@ -314,7 +438,7 @@ function StudentsContent() {
                   setConfirmDelete(true);
                 }}
               >
-                <Trash2 size={14} /> O'chirish
+                <Trash2 size={14} /> O&apos;chirish
               </Button>
               <button
                 onClick={() => setSelected(new Set())}
@@ -338,12 +462,12 @@ function StudentsContent() {
         >
           <p>
             <span className="font-semibold text-foreground">{selectedStudents.length} ta</span> akkaunt va ularning
-            barcha progressi, imtihonlari butunlay o'chadi. Bu amalni qaytarib bo'lmaydi.
+            barcha progressi, imtihonlari butunlay o&apos;chadi. Bu amalni qaytarib bo&apos;lmaydi.
           </p>
           <ul className="mt-3 max-h-36 overflow-y-auto flex flex-col gap-1">
             {selectedStudents.slice(0, 8).map((s) => (
               <li key={s.id} className="text-foreground">
-                {s.fullName} <span className="text-muted">@{s.username}</span>
+                {s.fullName} <span className="text-muted">{handle(s.username)}</span>
               </li>
             ))}
             {selectedStudents.length > 8 && <li className="text-muted">...va yana {selectedStudents.length - 8} ta</li>}

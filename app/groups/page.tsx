@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Target, Clock, BookOpenCheck, Layers, ListChecks, GraduationCap } from "lucide-react";
+import { Users, Target, Clock, BookOpenCheck, Layers, ListChecks, GraduationCap, Table } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -184,7 +184,7 @@ export default function GroupsPage() {
                     {isBookExam ? "O'tish bali" : "Talab qilingan"}: {a.minimumMastery}%{met ? " — bajarildi!" : ""}
                   </p>
 
-                  <div className="flex gap-2 mt-4">
+                  <div className={`mt-4 ${isBookExam ? "flex gap-2" : "grid grid-cols-2 gap-2"}`}>
                     {isBookExam ? (
                       <Link href={`/exam/seoul-hangugo/${a.bookId}/umumiy`} className={`${actionCls} bg-brand-soft border-transparent`}>
                         <GraduationCap size={14} /> Imtihonni boshlash
@@ -193,6 +193,12 @@ export default function GroupsPage() {
                       <>
                         <Link href={`/flashcards?set=${a.setId}${rangeQuery}`} className={actionCls}>
                           <Layers size={14} /> Flashcard
+                        </Link>
+                        <Link
+                          href={`/vocabulary/${a.setId}/table${hasRange ? `?from=${a.wordFrom}&to=${a.wordTo}` : ""}`}
+                          className={actionCls}
+                        >
+                          <Table size={14} /> Jadval
                         </Link>
                         <Link href={`/quiz?set=${a.setId}${rangeQuery}`} className={actionCls}>
                           <ListChecks size={14} /> Test

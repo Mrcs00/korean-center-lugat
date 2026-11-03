@@ -1,14 +1,30 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
+import { parseRange, rangeLabel } from "@/lib/utils/examSets";
 
 export default function TableViewPage() {
+  return (
+    <Suspense fallback={null}>
+      <TableViewContent />
+    </Suspense>
+  );
+}
+
+function TableViewContent() {
   const params = useParams<{ setId: string }>();
+  const searchParams = useSearchParams();
   const set = VOCAB_SETS.find((s) => s.id === params.setId);
-  const words = VOCAB_WORDS.filter((w) => w.setId === params.setId).sort((a, b) => a.order - b.order);
+  const allWords = VOCAB_WORDS.filter((w) => w.setId === params.setId).sort((a, b) => a.order - b.order);
+  // A teacher's assignment opens this page with ?from=&to= to show only those words.
+  const range = parseRange(searchParams.get("from"), searchParams.get("to"), allWords.length);
+  const words = range ? allWords.slice(range.from - 1, range.to) : allWords;
+  const firstNumber = range ? range.from : 1;
+  const printHref = `/vocabulary/${params.setId}/print${range ? `?from=${range.from}&to=${range.to}` : ""}`;
 
   if (!set) {
     return (
@@ -24,18 +40,27 @@ export default function TableViewPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-10 bg-surface border-b border-border px-5 py-3">
-        <Link
-          href={`/vocabulary/${set.id}`}
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
-        >
-          <ArrowLeft size={16} /> Orqaga
-        </Link>
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <Link
+            href={`/vocabulary/${set.id}`}
+            className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
+          >
+            <ArrowLeft size={16} /> Orqaga
+          </Link>
+          <Link
+            href={printHref}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline"
+          >
+            <Printer size={15} /> Chop etish
+          </Link>
+        </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-6">
           <h1 className="font-kr text-2xl font-extrabold">{set.title}</h1>
           <p className="text-sm text-muted mt-0.5">
+            {range && <span className="font-semibold text-brand-darker">{rangeLabel(range.from, range.to)} · </span>}
             {set.description} · {words.length} ta so'z
           </p>
         </div>
@@ -50,9 +75,9 @@ export default function TableViewPage() {
               </tr>
             </thead>
             <tbody>
-              {words.map((w) => (
+              {words.map((w, i) => (
                 <tr key={w.id} className="border-b border-border last:border-0 hover:bg-black/[0.015]">
-                  <td className="py-2.5 px-3 text-muted-soft tabular-nums">{w.order}</td>
+                  <td className="py-2.5 px-3 text-muted-soft tabular-nums">{firstNumber + i}</td>
                   <td className="font-kr py-2.5 px-3 font-semibold whitespace-nowrap">{w.koreanWord}</td>
                   <td className="py-2.5 px-3">{w.uzbekTranslation}</td>
                 </tr>

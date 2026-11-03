@@ -1,15 +1,29 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
+import { parseRange, rangeLabel } from "@/lib/utils/examSets";
 import { Button } from "@/components/ui/Button";
 
 export default function PrintSetPage() {
+  return (
+    <Suspense fallback={null}>
+      <PrintSetContent />
+    </Suspense>
+  );
+}
+
+function PrintSetContent() {
   const params = useParams<{ setId: string }>();
+  const searchParams = useSearchParams();
   const set = VOCAB_SETS.find((s) => s.id === params.setId);
-  const words = VOCAB_WORDS.filter((w) => w.setId === params.setId).sort((a, b) => a.order - b.order);
+  const allWords = VOCAB_WORDS.filter((w) => w.setId === params.setId).sort((a, b) => a.order - b.order);
+  const range = parseRange(searchParams.get("from"), searchParams.get("to"), allWords.length);
+  const words = range ? allWords.slice(range.from - 1, range.to) : allWords;
+  const firstNumber = range ? range.from : 1;
 
   if (!set) {
     return (
@@ -41,6 +55,7 @@ export default function PrintSetPage() {
         <div className="mb-6">
           <h1 className="font-kr text-2xl font-extrabold">{set.title}</h1>
           <p className="text-sm text-muted mt-0.5">
+            {range && <span className="font-semibold">{rangeLabel(range.from, range.to)} · </span>}
             {set.description} · {words.length} ta so'z
           </p>
           <p className="text-xs text-muted-soft mt-1">
@@ -58,9 +73,9 @@ export default function PrintSetPage() {
             </tr>
           </thead>
           <tbody>
-            {words.map((w) => (
+            {words.map((w, i) => (
               <tr key={w.id} className="border-b border-border align-top break-inside-avoid">
-                <td className="py-2.5 pr-2 text-muted tabular-nums">{w.order}</td>
+                <td className="py-2.5 pr-2 text-muted tabular-nums">{firstNumber + i}</td>
                 <td className="font-kr py-2.5 pr-3 font-semibold whitespace-nowrap">{w.koreanWord}</td>
                 <td className="py-2.5 pr-3 text-muted whitespace-nowrap">{w.uzbekTranslation}</td>
                 <td className="py-2.5">
