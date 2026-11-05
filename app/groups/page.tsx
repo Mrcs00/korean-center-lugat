@@ -9,7 +9,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useStore } from "@/lib/store/progressStore";
 import { RealAssignment, fetchAssignmentsForGroup } from "@/lib/services/assignmentService";
 import { MOCK_STUDENTS } from "@/lib/data/teacherMock";
-import { examSetTitle, rangeLabel, rangeProgressPercent } from "@/lib/utils/examSets";
+import { examSetTitle, rangeLabel, verifiedRangePercent } from "@/lib/utils/examSets";
 import { supabase } from "@/lib/supabase/client";
 
 interface RealGroupmate {
@@ -142,7 +142,7 @@ export default function GroupsPage() {
                 (best, x) => Math.max(best, Math.round((x.correctCount / Math.max(x.totalQuestions, 1)) * 100)),
                 0
               );
-              const pct = isBookExam ? bestScore : rangeProgressPercent(a.setId, a.wordFrom, a.wordTo, progress);
+              const pct = isBookExam ? bestScore : verifiedRangePercent(a.setId, a.wordFrom, a.wordTo, progress, a.createdAt);
               const met = pct >= a.minimumMastery && (!isBookExam || attempts.length > 0);
 
               const actionCls =
@@ -183,6 +183,11 @@ export default function GroupsPage() {
                   <p className="text-[11px] text-muted-soft mt-2">
                     {isBookExam ? "O'tish bali" : "Talab qilingan"}: {a.minimumMastery}%{met ? " — bajarildi!" : ""}
                   </p>
+                  {!isBookExam && (
+                    <p className="text-[11px] text-muted-soft mt-0.5">
+                      Faqat test yoki imtihonda to&apos;g&apos;ri javob bergan so&apos;zlar hisoblanadi.
+                    </p>
+                  )}
 
                   <div className={`mt-4 ${isBookExam ? "flex gap-2" : "grid grid-cols-2 gap-2"}`}>
                     {isBookExam ? (

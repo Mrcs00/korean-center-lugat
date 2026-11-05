@@ -45,6 +45,8 @@ export default function BookExamPage() {
   const [session, setSession] = useState<ExamSession | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [picking, setPicking] = useState(false);
+  // How many times this student already took the exam (counted from when it was sent).
+  const [attemptInfo, setAttemptInfo] = useState<{ used: number; best: number }>({ used: 0, best: 0 });
   const sessionKeyRef = useRef<string | null>(null);
   const sessionRef = useRef<ExamSession | null>(null);
   const finishedRef = useRef(false);
@@ -79,6 +81,24 @@ export default function BookExamPage() {
         }
       }
       if (cancelled) return;
+
+      let used = 0;
+      let best = 0;
+      if (!teacher && found) {
+        const { data: past } = await supabase
+          .from("exam_attempts")
+          .select("correct_count, total_questions")
+          .eq("student_id", user.id)
+          .eq("set_id", examId)
+          .gte("started_at", found.createdAt ?? "1970-01-01T00:00:00Z");
+        used = past?.length ?? 0;
+        best = (past ?? []).reduce(
+          (m, a) => Math.max(m, Math.round((a.correct_count / Math.max(a.total_questions, 1)) * 100)),
+          0
+        );
+      }
+      if (cancelled) return;
+      setAttemptInfo({ used, best });
 
       const key = examSessionKey(user.id, examId);
       sessionKeyRef.current = key;
@@ -182,6 +202,8 @@ export default function BookExamPage() {
   }
 
   const studentCount = Math.min(assignment?.questionCount ?? 50, words.length);
+  const maxAttempts = assignment?.maxAttempts ?? 2;
+  const attemptsExhausted = !isTeacher && attemptInfo.used >= maxAttempts;
 
   if (phase === "intro") {
     const answeredCount = session ? Object.keys(session.answers).length : 0;
@@ -202,6 +224,11 @@ export default function BookExamPage() {
                 <li>
                   🎯 O&apos;tish bali: {assignment.minimumMastery}%
                   {assignment.deadline ? ` · Muddat: ${assignment.deadline}` : ""}
+                </li>
+              )}
+              {assignment && (
+                <li>
+                  🔁 Urinishlar: {Math.min(attemptInfo.used + (session ? 1 : 0), maxAttempts)} / {maxAttempts}
                 </li>
               )}
               <li>📊 Natija va xato so&apos;zlar avtomatik saqlanadi</li>
@@ -235,13 +262,25 @@ export default function BookExamPage() {
                 <Button size="lg" onClick={resume}>
                   {sessionExpired ? "Natijani ko'rish" : "Davom ettirish"}
                 </Button>
-                <Button
-                  size="lg"
-                  variant="secondary"
-                  onClick={() => (isTeacher ? setPicking(true) : restart(studentCount))}
-                >
-                  Qaytadan boshlash (yangi savollar)
-                </Button>
+                {isTeacher ? (
+                  <Button size="lg" variant="secondary" onClick={() => setPicking(true)}>
+                    Qaytadan boshlash (yangi savollar)
+                  </Button>
+                ) : (
+                  <p className="text-xs text-muted mt-1">
+                    Imtihonni tugatmaguncha savollar o&apos;zgarmaydi.
+                  </p>
+                )}
+              </div>
+            ) : attemptsExhausted ? (
+              <div>
+                <p className="text-sm font-semibold mb-1">Urinishlar tugadi</p>
+                <p className="text-xs text-muted mb-4">
+                  {attemptInfo.used} / {maxAttempts} urinish ishlatildi. Eng yaxshi natija: {attemptInfo.best}%.
+                </p>
+                <Link href="/groups" className="text-sm font-semibold text-brand-dark">
+                  Guruhim va topshiriqlar →
+                </Link>
               </div>
             ) : (
               <>
@@ -283,9 +322,9 @@ export default function BookExamPage() {
         isCorrect: r.isCorrect,
         studentAnswer: r.studentAnswer,
       }));
-    results
-      .filter((r) => r.studentAnswer !== "")
-      .forEach((r) => reviewWord(r.wordId, r.isCorrect ? "correct" : "wrong"));
+    // A question left unanswered counts as not known, so that word comes back
+    // for review instead of silently disappearing from the student's progress.
+    results.forEach((r) => reviewWord(r.wordId, r.isCorrect ? "correct" : "wrong"));
     recordExamAttempt(attempt, answers);
     router.push(`/result/${attempt.id}`);
   };

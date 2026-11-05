@@ -74,6 +74,7 @@ export default function TeacherExamsPage() {
   // kind = "book_exam": which book, and how many random questions
   const [bookId, setBookId] = useState(SEOUL_BOOKS[0].id);
   const [questionText, setQuestionText] = useState("50");
+  const [attemptsText, setAttemptsText] = useState("2");
 
   const loadAssignments = useCallback(async () => {
     try {
@@ -119,6 +120,8 @@ export default function TeacherExamsPage() {
     if (q === null || q < 1) inputError = "Savollar sonini kiriting.";
     else if (q > bookTotal) inputError = `Bu kitobda jami ${bookTotal} ta so'z bor.`;
     else questionCount = q;
+    const at = toInt(attemptsText);
+    if (!inputError && (at === null || at < 1 || at > 10)) inputError = "Urinishlar soni 1 dan 10 gacha bo'lsin.";
   }
 
   const canSave = Boolean(groupId) && !inputError && (kind === "book_exam" || Boolean(setId));
@@ -136,6 +139,7 @@ export default function TeacherExamsPage() {
         wordTo: range?.to ?? null,
         bookId: kind === "book_exam" ? bookId : undefined,
         questionCount: kind === "book_exam" ? questionCount : undefined,
+        maxAttempts: kind === "book_exam" ? toInt(attemptsText) ?? 2 : undefined,
         deadline: deadline || null,
         minimumMastery: minMastery,
       });
@@ -191,7 +195,7 @@ export default function TeacherExamsPage() {
               const isBookExam = a.kind === "book_exam";
               const title = examSetTitle(a.setId);
               const detail = isBookExam
-                ? `${a.questionCount ?? 50} ta tasodifiy savol`
+                ? `${a.questionCount ?? 50} ta tasodifiy savol · ${a.maxAttempts} urinish`
                 : a.wordFrom && a.wordTo
                 ? rangeLabel(a.wordFrom, a.wordTo)
                 : "Butun to'plam";
@@ -230,7 +234,7 @@ export default function TeacherExamsPage() {
                     </button>
                   </div>
                   <p className="text-[11px] text-muted-soft mt-3">
-                    {isBookExam ? "O'tish bali" : "Talab qilingan mastery"}: {a.minimumMastery}%
+                    {isBookExam ? "O'tish bali" : "Talab (test/imtihonda to'g'ri javob bergan so'zlar)"}: {a.minimumMastery}%
                   </p>
                 </Card>
               );
@@ -356,6 +360,17 @@ export default function TeacherExamsPage() {
                         className={`${inputCls} text-center font-semibold`}
                       />
                     </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted">
+                        Necha marta topshirish mumkin? (1–10)
+                      </label>
+                      <input
+                        inputMode="numeric"
+                        value={attemptsText}
+                        onChange={(e) => setAttemptsText(e.target.value)}
+                        className={`${inputCls} text-center font-semibold`}
+                      />
+                    </div>
                   </>
                 )}
 
@@ -368,7 +383,7 @@ export default function TeacherExamsPage() {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-muted">
-                      {kind === "book_exam" ? "O'tish bali %" : "Min. mastery %"}
+                      {kind === "book_exam" ? "O'tish bali %" : "Talab: tasdiqlangan so'z %"}
                     </label>
                     <input
                       type="number"

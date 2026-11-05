@@ -59,16 +59,25 @@ export function rangeLabel(from: number, to: number): string {
   return `${from}–${to}-so'zlar`;
 }
 
-/** % of the words in [from, to] that the student has mastered. */
-export function rangeProgressPercent(
+/**
+ * % of the words in [from, to] that the student answered correctly in a test
+ * or exam AFTER `since` (when the teacher sent the assignment). Flashcard
+ * "Bilaman" taps do not count — an assignment is done by being tested.
+ */
+export function verifiedRangePercent(
   setId: string,
   from: number | null,
   to: number | null,
-  progress: Record<string, VocabularyProgress>
+  progress: Record<string, VocabularyProgress>,
+  since: string | null
 ): number {
   const all = setWordsInOrder(setId);
   const words = from && to ? all.slice(from - 1, to) : all;
   if (words.length === 0) return 0;
-  const mastered = words.filter((w) => (progress[w.id]?.masteryLevel ?? 0) >= 3).length;
-  return Math.round((mastered / words.length) * 100);
+  const sinceMs = since ? new Date(since).getTime() : 0;
+  const verified = words.filter((w) => {
+    const at = progress[w.id]?.verifiedCorrectAt;
+    return at ? new Date(at).getTime() >= sinceMs : false;
+  }).length;
+  return Math.round((verified / words.length) * 100);
 }

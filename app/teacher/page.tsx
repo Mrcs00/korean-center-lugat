@@ -14,7 +14,7 @@ export default function TeacherHomePage() {
     students.length > 0
       ? Math.round(students.reduce((s, st) => s + st.masteryPercent, 0) / students.length)
       : 0;
-  const atRisk = students.filter((s) => s.masteryPercent < 20);
+  const atRisk = students.filter((s) => s.attentionReason);
 
   return (
     <TeacherShell>
@@ -58,7 +58,7 @@ export default function TeacherHomePage() {
                         </div>
                       </div>
                       <span className="text-sm font-bold">
-                        {s.lastExamScore ? s.lastExamScore : `${s.masteryPercent}% mastery`}
+                        {s.lastExamScore ? s.lastExamScore : `${s.masteryPercent}% tasdiqlangan`}
                       </span>
                     </div>
                   </Link>
@@ -76,7 +76,7 @@ export default function TeacherHomePage() {
               <div className="flex flex-col gap-1.5">
                 {atRisk.map((s) => (
                   <Link key={s.id} href={`/teacher/students/${s.id}`} className="text-sm font-medium hover:underline">
-                    {s.fullName} — mastery {s.masteryPercent}%
+                    {s.fullName} — {s.attentionReason}
                   </Link>
                 ))}
               </div>

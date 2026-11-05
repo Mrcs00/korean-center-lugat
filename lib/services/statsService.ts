@@ -1,6 +1,7 @@
 import { VOCAB_WORDS } from "../data/seed";
 import { VocabularyProgress, DailyActivity } from "../types";
 import { isDueForReview } from "./spacedRepetition";
+import { shiftDateKey, tashkentDateKey } from "../utils/dates";
 
 /**
  * Real, activity-derived streak — counts consecutive days (ending today or
@@ -14,17 +15,16 @@ export function computeStreak(dailyActivity: Record<string, DailyActivity>): num
     const a = dailyActivity[iso];
     return !!a && (a.newWords > 0 || a.reviewedWords > 0);
   };
-  const toIso = (d: Date) => d.toISOString().slice(0, 10);
-
-  const cursor = new Date();
-  if (!hasActivity(toIso(cursor))) {
-    cursor.setDate(cursor.getDate() - 1);
+  // Days are counted in Tashkent time (see lib/utils/dates.ts).
+  let cursor = tashkentDateKey();
+  if (!hasActivity(cursor)) {
+    cursor = shiftDateKey(cursor, -1);
   }
 
   let streak = 0;
-  while (hasActivity(toIso(cursor))) {
+  while (hasActivity(cursor)) {
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = shiftDateKey(cursor, -1);
   }
   return streak;
 }
@@ -89,9 +89,14 @@ export interface LevelEstimate {
   wordsToNextLevel: number;
 }
 
+// The estimate only looks at the TOPIK vocabulary. The Seoul Hangugo book
+// words are a separate course; counting them made the percentage meaningless
+// (a student could never reach 65% of everything combined).
+const TOPIK_WORD_IDS = new Set(VOCAB_WORDS.filter((w) => !w.setId.startsWith("seoul-")).map((w) => w.id));
+
 export function estimateTopikLevel(progress: Record<string, VocabularyProgress>): LevelEstimate {
-  const totalWords = VOCAB_WORDS.length;
-  const mastered = masteredCount(progress);
+  const totalWords = TOPIK_WORD_IDS.size;
+  const mastered = Object.values(progress).filter((p) => p.masteryLevel >= 3 && TOPIK_WORD_IDS.has(p.wordId)).length;
 
   if (totalWords === 0) {
     return {

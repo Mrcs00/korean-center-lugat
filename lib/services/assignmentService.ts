@@ -15,11 +15,13 @@ export interface RealAssignment {
   wordTo: number | null;
   bookId: string | null; // only for kind "book_exam"
   questionCount: number | null; // only for kind "book_exam"
+  maxAttempts: number; // how many times a book exam may be taken
+  createdAt: string | null; // when the teacher sent it
 }
 
 const FULL_COLUMNS =
-  "id, group_id, set_id, deadline, minimum_mastery, kind, word_from, word_to, book_id, question_count, groups(name)";
-const LEGACY_COLUMNS = "id, group_id, set_id, deadline, minimum_mastery, groups(name)";
+  "id, group_id, set_id, deadline, minimum_mastery, kind, word_from, word_to, book_id, question_count, max_attempts, created_at, groups(name)";
+const LEGACY_COLUMNS = "id, group_id, set_id, deadline, minimum_mastery, created_at, groups(name)";
 
 const UPGRADE_HINT =
   "Supabase'da docs/assignments-upgrade.sql ni ishga tushirganingizni tekshiring.";
@@ -37,6 +39,8 @@ function mapRow(a: Record<string, unknown>): RealAssignment {
     wordTo: (a.word_to as number | null | undefined) ?? null,
     bookId: (a.book_id as string | null | undefined) ?? null,
     questionCount: (a.question_count as number | null | undefined) ?? null,
+    maxAttempts: (a.max_attempts as number | null | undefined) ?? 2,
+    createdAt: (a.created_at as string | null | undefined) ?? null,
   };
 }
 
@@ -75,6 +79,7 @@ export async function createAssignment(input: {
   wordTo?: number | null;
   bookId?: string; // for kind "book_exam"
   questionCount?: number;
+  maxAttempts?: number;
   deadline: string | null;
   minimumMastery: number;
 }): Promise<void> {
@@ -96,6 +101,7 @@ export async function createAssignment(input: {
     row.kind = "book_exam";
     row.book_id = input.bookId;
     row.question_count = input.questionCount ?? 50;
+    row.max_attempts = input.maxAttempts ?? 2;
   } else if (input.wordFrom && input.wordTo) {
     row.word_from = input.wordFrom;
     row.word_to = input.wordTo;

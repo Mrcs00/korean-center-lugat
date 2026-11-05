@@ -12,12 +12,13 @@ import {
   wordsDueForReview,
   estimateTopikLevel,
 } from "@/lib/services/statsService";
+import { tashkentDateKey } from "@/lib/utils/dates";
 
 
 export default function DashboardPage() {
   const { profile, progress, dailyActivity, dailyGoal } = useStore();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = tashkentDateKey();
   const todayActivity = dailyActivity[today] ?? { newWords: 0, reviewedWords: 0, xpEarned: 0 };
   const dailyDone = Math.min(dailyGoal, todayActivity.newWords + todayActivity.reviewedWords);
   const dailyGoalMet = dailyDone >= dailyGoal;
