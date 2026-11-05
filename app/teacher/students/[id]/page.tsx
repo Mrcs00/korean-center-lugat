@@ -93,13 +93,13 @@ export default function TeacherStudentDetailPage() {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="rounded-2xl bg-background py-3">
                       <p className="text-xl font-extrabold">{student.totalMastered.toLocaleString()}</p>
-                      <p className="text-[11px] text-muted">tasdiqlangan so'z</p>
+                      <p className="text-[11px] text-muted">o'zlashtirilgan</p>
                     </div>
                     <div className="rounded-2xl bg-background py-3">
                       <p className="text-xl font-extrabold" style={{ color: masteryColor(student.masteryPercent) }}>
                         {student.masteryPercent}%
                       </p>
-                      <p className="text-[11px] text-muted">tasdiqlangan mastery</p>
+                      <p className="text-[11px] text-muted">umumiy mastery</p>
                     </div>
                     <div className="rounded-2xl bg-background py-3">
                       <p className="text-xl font-extrabold">
@@ -114,15 +114,6 @@ export default function TeacherStudentDetailPage() {
                       style={{ width: `${student.masteryPercent}%`, background: masteryColor(student.masteryPercent) }}
                     />
                   </div>
-                  <p className="text-[11px] text-muted mt-3">
-                    Tasdiqlangan = test yoki imtihonda, bir necha kun oralatib to&apos;g&apos;ri javob bergan so&apos;zlar.
-                    O&apos;zi &quot;Bilaman&quot; deb belgilagan va testlarni qo&apos;shib hisoblaganda: {student.selfMastered} ta so&apos;z (
-                    {student.selfMasteryPercent}%).
-                  </p>
-                  <p className="text-[11px] text-muted mt-1">
-                    Oxirgi faollik: {student.lastActiveAt ? lastActiveText(student.lastActiveAt) : "hali boshlamagan"}
-                    {student.attentionReason ? ` · ${student.attentionReason}` : ""}
-                  </p>
                 </div>
               </Card>
 
@@ -194,13 +185,6 @@ export default function TeacherStudentDetailPage() {
       </TeacherGate>
     </TeacherShell>
   );
-}
-
-function lastActiveText(iso: string): string {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  if (days <= 0) return "bugun";
-  if (days === 1) return "kecha";
-  return `${days} kun oldin`;
 }
 
 function GroupChanger({

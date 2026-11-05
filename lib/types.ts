@@ -67,11 +67,6 @@ export interface VocabularyProgress {
   confidence: number; // 0..1
   lastReviewedAt: string | null;
   nextReviewAt: string; // ISO date
-  // "Verified" mastery: only test/exam answers move it (never flashcard
-  // self-ratings), and it only rises once its review interval has passed.
-  verifiedLevel: MasteryLevel;
-  verifiedNextAt: string; // ISO date — when verifiedLevel may rise again
-  verifiedCorrectAt: string | null; // last correct answer in a test/exam
 }
 
 export type SelfRating = "unknown" | "partial" | "known";

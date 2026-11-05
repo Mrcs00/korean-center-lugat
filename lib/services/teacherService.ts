@@ -1,6 +1,7 @@
 import { supabase } from "../supabase/client";
 import { VOCAB_WORDS } from "../data/seed";
-import { fetchAllRows } from "../supabase/fetchAll";
+import { masteredCount as computeMasteredCount } from "./statsService";
+import { VocabularyProgress } from "../types";
 
 export interface ExamAttemptSummary {
   id: string;
@@ -26,12 +27,8 @@ export interface RealStudent {
   username: string;
   group: string | null;
   groupId: string | null;
-  totalMastered: number; // words with VERIFIED mastery (proven in tests/exams)
-  masteryPercent: number; // verified words ÷ words of the sets the student actually studies
-  selfMastered: number; // words mastered including flashcard self-ratings
-  selfMasteryPercent: number;
-  lastActiveAt: string | null;
-  attentionReason: string | null; // set when the student needs the teacher's attention
+  totalMastered: number;
+  masteryPercent: number;
   wrongWords: { wordId: string; koreanWord: string; uzbekTranslation: string; timesWrong: number }[];
   lastExamSetId: string | null;
   lastExamScore: string | null;
@@ -41,83 +38,23 @@ export interface RealStudent {
 
 const wordById = new Map(VOCAB_WORDS.map((w) => [w.id, w]));
 
-// How many words each set has — used so a student's progress is measured
-// against the sets they actually study, not against every word on the site.
-const wordsPerSet = new Map<string, number>();
-VOCAB_WORDS.forEach((w) => wordsPerSet.set(w.setId, (wordsPerSet.get(w.setId) ?? 0) + 1));
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const INACTIVE_AFTER_DAYS = 7;
-const LOW_EXAM_PERCENT = 50;
-
-interface ProgressRowIn {
-  student_id: string;
-  word_id: string;
-  mastery_level: number;
-  wrong_count: number;
-  last_reviewed_at: string | null;
-  verified_level?: number | null;
-}
-
-interface AttemptRowIn {
-  id: string;
-  student_id: string;
-  set_id: string;
-  correct_count: number;
-  wrong_count: number | null;
-  skipped_count: number | null;
-  total_questions: number;
-  started_at: string;
-}
-
-type Page<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
-
-// Reads every student's progress (all pages — Supabase caps one request at
-// 1000 rows). If docs/logic-upgrade.sql has not been run yet the verified
-// column does not exist, so we fall back to the old columns.
-async function fetchProgressRows(): Promise<ProgressRowIn[]> {
-  const run = (columns: string) =>
-    fetchAllRows<ProgressRowIn>(
-      (from, to) =>
-        supabase
-          .from("vocabulary_progress")
-          .select(columns)
-          .order("student_id")
-          .order("word_id")
-          .range(from, to) as unknown as Page<ProgressRowIn>
-    );
-  try {
-    return await run("student_id, word_id, mastery_level, wrong_count, last_reviewed_at, verified_level");
-  } catch {
-    return run("student_id, word_id, mastery_level, wrong_count, last_reviewed_at");
-  }
-}
-
 /**
- * Fetches every student profile, their group, and their progress, then
- * assembles it all client-side. Requires the logged-in account to have
- * role='teacher' (see docs/teacher-schema.sql) — RLS otherwise only exposes
- * each student their own rows.
- *
- * Numbers shown to the teacher use VERIFIED mastery (proven in tests/exams),
- * not flashcard self-ratings, and are measured against the sets the student
- * actually studies.
+ * Fetches every student profile, their group, and their progress in a
+ * handful of queries, then assembles it all client-side. Requires the
+ * logged-in account to have role='teacher' (see docs/teacher-schema.sql) —
+ * RLS otherwise only exposes each student their own rows.
  */
 export async function fetchRealStudents(): Promise<RealStudent[]> {
-  const [{ data: profiles, error: profilesError }, { data: memberships }, allProgress, attempts] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, username").eq("role", "student"),
-    supabase.from("group_members").select("student_id, group_id, groups(name)"),
-    fetchProgressRows(),
-    fetchAllRows<AttemptRowIn>(
-      (from, to) =>
-        supabase
-          .from("exam_attempts")
-          .select("id, student_id, set_id, correct_count, wrong_count, skipped_count, total_questions, started_at")
-          .order("started_at", { ascending: false })
-          .order("id")
-          .range(from, to) as unknown as Page<AttemptRowIn>
-    ),
-  ]);
+  const [{ data: profiles, error: profilesError }, { data: memberships }, { data: allProgress }, { data: attempts }] =
+    await Promise.all([
+      supabase.from("profiles").select("id, full_name, username").eq("role", "student"),
+      supabase.from("group_members").select("student_id, group_id, groups(name)"),
+      supabase.from("vocabulary_progress").select("student_id, word_id, mastery_level, wrong_count"),
+      supabase
+        .from("exam_attempts")
+        .select("id, student_id, set_id, correct_count, wrong_count, skipped_count, total_questions, started_at")
+        .order("started_at", { ascending: false }),
+    ]);
 
   if (profilesError) throw profilesError;
 
@@ -127,82 +64,61 @@ export async function fetchRealStudents(): Promise<RealStudent[]> {
     if (groupName) groupByStudent.set(m.student_id, { id: m.group_id, name: groupName });
   });
 
-  const progressByStudent = new Map<string, ProgressRowIn[]>();
-  allProgress.forEach((row) => {
+  const progressByStudent = new Map<string, VocabularyProgress[]>();
+  (allProgress ?? []).forEach((row) => {
     const list = progressByStudent.get(row.student_id) ?? [];
-    list.push(row);
+    list.push({
+      studentId: row.student_id,
+      wordId: row.word_id,
+      masteryLevel: row.mastery_level,
+      correctCount: 0,
+      wrongCount: row.wrong_count,
+      timesSeen: 1,
+      confidence: 0,
+      lastReviewedAt: null,
+      nextReviewAt: new Date().toISOString(),
+    } as VocabularyProgress);
     progressByStudent.set(row.student_id, list);
   });
 
-  const attemptsByStudent = new Map<string, AttemptRowIn[]>();
-  attempts.forEach((a) => {
+  const attemptsByStudent = new Map<string, typeof attempts>();
+  (attempts ?? []).forEach((a) => {
     const list = attemptsByStudent.get(a.student_id) ?? [];
     list.push(a);
-    attemptsByStudent.set(a.student_id, list);
+    attemptsByStudent.set(a.student_id, list as typeof attempts);
   });
 
-  const now = Date.now();
-
   return (profiles ?? []).map((p) => {
-    const rows = progressByStudent.get(p.id) ?? [];
-    const studentAttempts = attemptsByStudent.get(p.id) ?? [];
+    const progressList = progressByStudent.get(p.id) ?? [];
+    const progressMap: Record<string, VocabularyProgress> = {};
+    progressList.forEach((pr) => (progressMap[pr.wordId] = pr));
+    const totalMastered = computeMasteredCount(progressMap);
+    const masteryPercent =
+      VOCAB_WORDS.length > 0 ? Math.round((totalMastered / VOCAB_WORDS.length) * 100) : 0;
 
-    const verifiedMastered = rows.filter((r) => (r.verified_level ?? 0) >= 3).length;
-    const selfMastered = rows.filter((r) => r.mastery_level >= 3).length;
-
-    // Denominator: all words of the sets this student has started.
-    const studiedSets = new Set<string>();
-    rows.forEach((r) => {
-      const setId = wordById.get(r.word_id)?.setId;
-      if (setId) studiedSets.add(setId);
-    });
-    let studiedWords = 0;
-    studiedSets.forEach((setId) => (studiedWords += wordsPerSet.get(setId) ?? 0));
-    const percentOf = (n: number) => (studiedWords > 0 ? Math.min(100, Math.round((n / studiedWords) * 100)) : 0);
-
-    const wrongWords = rows
-      .filter((r) => r.wrong_count > 0)
-      .sort((a, b) => b.wrong_count - a.wrong_count)
+    const wrongWords = progressList
+      .filter((pr) => pr.wrongCount > 0)
+      .sort((a, b) => b.wrongCount - a.wrongCount)
       .slice(0, 10)
-      .map((r) => {
-        const word = wordById.get(r.word_id);
+      .map((pr) => {
+        const word = wordById.get(pr.wordId);
         return {
-          wordId: r.word_id,
-          koreanWord: word?.koreanWord ?? r.word_id,
+          wordId: pr.wordId,
+          koreanWord: word?.koreanWord ?? pr.wordId,
           uzbekTranslation: word?.uzbekTranslation ?? "",
-          timesWrong: r.wrong_count,
+          timesWrong: pr.wrongCount,
         };
       });
 
+    const studentAttempts = attemptsByStudent.get(p.id) ?? [];
     const lastAttempt = studentAttempts[0];
     const avgExamScore =
       studentAttempts.length > 0
         ? Math.round(
-            studentAttempts.reduce((sum, a) => sum + (a.correct_count / Math.max(a.total_questions, 1)) * 100, 0) /
+            studentAttempts.reduce((sum, a) => sum + (a!.correct_count / a!.total_questions) * 100, 0) /
               studentAttempts.length
           )
         : null;
-
-    // Last sign of life: last word reviewed or last exam started.
-    let lastActiveMs = 0;
-    rows.forEach((r) => {
-      if (r.last_reviewed_at) lastActiveMs = Math.max(lastActiveMs, new Date(r.last_reviewed_at).getTime());
-    });
-    if (lastAttempt) lastActiveMs = Math.max(lastActiveMs, new Date(lastAttempt.started_at).getTime());
-    const lastActiveAt = lastActiveMs > 0 ? new Date(lastActiveMs).toISOString() : null;
-
-    // Who needs the teacher: hasn't started, went quiet, or recent exams are weak.
-    let attentionReason: string | null = null;
-    if (!lastActiveAt) {
-      attentionReason = "Hali boshlamagan";
-    } else if (now - lastActiveMs > INACTIVE_AFTER_DAYS * DAY_MS) {
-      attentionReason = `${Math.floor((now - lastActiveMs) / DAY_MS)} kundan beri kirmagan`;
-    } else if (studentAttempts.length > 0) {
-      const recent = studentAttempts.slice(0, 3);
-      const recentAvg =
-        recent.reduce((sum, a) => sum + (a.correct_count / Math.max(a.total_questions, 1)) * 100, 0) / recent.length;
-      if (recentAvg < LOW_EXAM_PERCENT) attentionReason = "Oxirgi imtihonlari past";
-    }
 
     return {
       id: p.id,
@@ -210,24 +126,20 @@ export async function fetchRealStudents(): Promise<RealStudent[]> {
       username: p.username,
       group: groupByStudent.get(p.id)?.name ?? null,
       groupId: groupByStudent.get(p.id)?.id ?? null,
-      totalMastered: verifiedMastered,
-      masteryPercent: percentOf(verifiedMastered),
-      selfMastered,
-      selfMasteryPercent: percentOf(selfMastered),
-      lastActiveAt,
-      attentionReason,
+      totalMastered,
+      masteryPercent,
       wrongWords,
       lastExamSetId: lastAttempt?.set_id ?? null,
       lastExamScore: lastAttempt ? `${lastAttempt.correct_count}/${lastAttempt.total_questions}` : null,
       avgExamScore,
       attempts: studentAttempts.map((a) => ({
-        id: a.id,
-        setId: a.set_id,
-        correct: a.correct_count,
-        total: a.total_questions,
-        wrong: a.wrong_count ?? 0,
-        skipped: a.skipped_count ?? 0,
-        startedAt: a.started_at,
+        id: a!.id,
+        setId: a!.set_id,
+        correct: a!.correct_count,
+        total: a!.total_questions,
+        wrong: a!.wrong_count ?? 0,
+        skipped: a!.skipped_count ?? 0,
+        startedAt: a!.started_at,
       })),
     };
   });

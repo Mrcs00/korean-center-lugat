@@ -12,7 +12,6 @@ import {
   setProgressPercent,
   estimateTopikLevel,
 } from "@/lib/services/statsService";
-import { shiftDateKey, tashkentDateKey } from "@/lib/utils/dates";
 
 export default function StatisticsPage() {
   const { profile, progress, examAttempts, dailyActivity } = useStore();
@@ -33,7 +32,9 @@ export default function StatisticsPage() {
   const sortedSets = [...VOCAB_SETS].sort((a, b) => a.setNumber - b.setNumber);
 
   const last7Days = Array.from({ length: 7 }).map((_, i) => {
-    const key = shiftDateKey(tashkentDateKey(), -(6 - i));
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const key = d.toISOString().slice(0, 10);
     const a = dailyActivity[key];
     return { key, count: (a?.newWords ?? 0) + (a?.reviewedWords ?? 0) };
   });

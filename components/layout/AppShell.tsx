@@ -70,7 +70,7 @@ function useIsTeacher(): boolean {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { profile, loadError } = useStore();
+  const { profile } = useStore();
   const isTeacher = useIsTeacher();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
@@ -155,11 +155,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 lg:ml-64 pb-20 lg:pb-0">
-        {loadError && (
-          <div className="mx-5 md:mx-8 mt-4 rounded-2xl bg-red-soft text-red text-sm px-4 py-3">
-            {"Progressingizni yuklab bo'lmadi. Internetni tekshirib, sahifani yangilang. Shu vaqtgacha natijalar saqlanmaydi."}
-          </div>
-        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}

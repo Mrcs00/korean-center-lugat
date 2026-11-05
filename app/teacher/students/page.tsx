@@ -51,7 +51,7 @@ function StudentsContent() {
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const noGroupCount = students.filter((s) => !s.groupId).length;
-  const atRiskCount = students.filter((s) => s.attentionReason).length;
+  const atRiskCount = students.filter((s) => s.masteryPercent < 20).length;
 
   const q = query.trim().toLowerCase();
   const searching = q.length > 0;
@@ -362,11 +362,6 @@ function StudentsContent() {
                         <div className="min-w-0">
                           <p className="text-sm font-bold truncate">{s.fullName}</p>
                           <p className="text-xs text-muted truncate">{handle(s.username)}</p>
-                          {s.attentionReason && (
-                            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-soft text-amber px-2 py-0.5 text-[11px] font-semibold">
-                              <AlertTriangle size={11} /> {s.attentionReason}
-                            </span>
-                          )}
                           <span
                             className="sm:hidden mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
                             style={{ background: tone.bg, color: tone.fg }}
@@ -385,7 +380,7 @@ function StudentsContent() {
 
                       <div className="hidden md:block w-28 shrink-0">
                         <div className="flex items-center justify-between text-[11px] mb-1">
-                          <span className="text-muted">Tasdiqlangan</span>
+                          <span className="text-muted">Progress</span>
                           <span className="font-bold" style={{ color: masteryColor(s.masteryPercent) }}>
                             {s.masteryPercent}%
                           </span>

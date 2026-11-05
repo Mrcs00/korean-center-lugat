@@ -10,70 +10,38 @@ const INTERVAL_DAYS: Record<MasteryLevel, number> = {
   4: 14,
 };
 
-export function isoDatePlusDays(days: number, from: Date = new Date()): string {
-  const d = new Date(from);
+export function isoDatePlusDays(days: number): string {
+  const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString();
 }
 
 /**
- * Applies a self-rating (flashcard) or a test/exam answer to a word's
- * progress and returns the next state.
- *
- * Two rules keep "mastered" honest:
- *  1. A level only goes UP when the word is due (its review interval has
- *     passed). Answering correctly three times in one minute no longer makes
- *     a word "o'zlashtirilgan"; it takes several days of spaced practice.
- *  2. "Verified" mastery (verifiedLevel) moves only with test/exam answers
- *     ("correct" / "wrong"), never with the flashcard "Bilaman" button. The
- *     teacher panel and assignments use the verified numbers.
- *
- * Wrong answers drop the level and bring the word back sooner.
+ * Applies a self-rating (flashcard) or quiz/exam result to a word's
+ * progress record and returns the next state. Wrong answers drop mastery
+ * and shorten the next interval ("Xato qilinsa tezroq qaytarilsin").
  */
 export function applyReview(
   current: VocabularyProgress,
-  outcome: SelfRating | "correct" | "wrong",
-  now: Date = new Date()
+  outcome: SelfRating | "correct" | "wrong"
 ): VocabularyProgress {
-  const isPositive = outcome === "known" || outcome === "correct";
-  const isNeutral = outcome === "partial";
-
-  // ── Student-facing mastery (self-rating + tests) ──
   let next: MasteryLevel = current.masteryLevel;
-  let nextReviewAt = current.nextReviewAt;
   let correctCount = current.correctCount;
   let wrongCount = current.wrongCount;
 
+  const isPositive = outcome === "known" || outcome === "correct";
+  const isNeutral = outcome === "partial";
+
   if (isPositive) {
+    next = Math.min(4, current.masteryLevel + 1) as MasteryLevel;
     correctCount += 1;
-    const due = current.masteryLevel === 0 || new Date(current.nextReviewAt).getTime() <= now.getTime();
-    if (due) {
-      next = Math.min(4, current.masteryLevel + 1) as MasteryLevel;
-      nextReviewAt = isoDatePlusDays(INTERVAL_DAYS[next], now);
-    }
-  } else if (!isNeutral) {
+  } else if (isNeutral) {
+    // stays at same level, but doesn't reset progress
+    next = current.masteryLevel;
+  } else {
     // "Bilmayman" / wrong: drop back, review sooner
     next = Math.max(0, current.masteryLevel - 1) as MasteryLevel;
-    nextReviewAt = isoDatePlusDays(INTERVAL_DAYS[next], now);
     wrongCount += 1;
-  }
-
-  // ── Verified mastery (test/exam answers only) ──
-  let verifiedLevel: MasteryLevel = current.verifiedLevel;
-  let verifiedNextAt = current.verifiedNextAt;
-  let verifiedCorrectAt = current.verifiedCorrectAt;
-
-  if (outcome === "correct") {
-    verifiedCorrectAt = now.toISOString();
-    const verifiedDue =
-      current.verifiedLevel === 0 || new Date(current.verifiedNextAt).getTime() <= now.getTime();
-    if (verifiedDue) {
-      verifiedLevel = Math.min(4, current.verifiedLevel + 1) as MasteryLevel;
-      verifiedNextAt = isoDatePlusDays(INTERVAL_DAYS[verifiedLevel], now);
-    }
-  } else if (outcome === "wrong") {
-    verifiedLevel = Math.max(0, current.verifiedLevel - 1) as MasteryLevel;
-    verifiedNextAt = isoDatePlusDays(INTERVAL_DAYS[verifiedLevel], now);
   }
 
   const confidence = Math.max(
@@ -88,11 +56,8 @@ export function applyReview(
     wrongCount,
     timesSeen: current.timesSeen + 1,
     confidence,
-    lastReviewedAt: now.toISOString(),
-    nextReviewAt,
-    verifiedLevel,
-    verifiedNextAt,
-    verifiedCorrectAt,
+    lastReviewedAt: new Date().toISOString(),
+    nextReviewAt: isoDatePlusDays(INTERVAL_DAYS[next]),
   };
 }
 
@@ -115,9 +80,6 @@ export function defaultProgress(studentId: string, wordId: string): VocabularyPr
     confidence: 0,
     lastReviewedAt: null,
     nextReviewAt: new Date().toISOString(),
-    verifiedLevel: 0,
-    verifiedNextAt: new Date().toISOString(),
-    verifiedCorrectAt: null,
   };
 }
 

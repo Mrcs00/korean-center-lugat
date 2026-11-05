@@ -220,9 +220,9 @@ function ExamRunnerContent() {
         isCorrect: r.isCorrect,
         studentAnswer: r.studentAnswer,
       }));
-    // A question left unanswered counts as not known, so that word comes back
-    // for review instead of silently disappearing from the student's progress.
-    results.forEach((r) => reviewWord(r.wordId, r.isCorrect ? "correct" : "wrong"));
+    results
+      .filter((r) => r.studentAnswer !== "")
+      .forEach((r) => reviewWord(r.wordId, r.isCorrect ? "correct" : "wrong"));
     recordExamAttempt(attempt, answers);
     router.push(`/result/${attempt.id}`);
   };
