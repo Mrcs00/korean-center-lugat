@@ -113,3 +113,16 @@ tiers, notifications, and the admin content-management screens described in
 the brief — the architecture (typed services + isolated data layer) is set
 up so each of those can be added incrementally without refactoring existing
 pages.
+
+## Student accounts (teacher creates them)
+
+Public sign-up is closed. Teachers create student accounts from the teacher
+panel (O'quvchilar → "O'quvchi qo'shish") and can reset a password from a
+student's page. This needs a server-side secret:
+
+- Vercel → Project → Settings → Environment Variables → add
+  `SUPABASE_SERVICE_ROLE_KEY` (Supabase → Project Settings → API → `service_role`).
+  Never commit it and never prefix it with `NEXT_PUBLIC_`. Redeploy afterwards.
+- Run `docs/security-fix.sql` once in the Supabase SQL Editor.
+- In Supabase → Authentication → Sign In / Providers, turn OFF
+  "Allow new users to sign up".

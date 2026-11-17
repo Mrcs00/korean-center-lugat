@@ -9,6 +9,7 @@ import {
   Check,
   ChevronRight,
   Search,
+  Plus,
   Trash2,
   UserX,
   Users,
@@ -20,6 +21,7 @@ import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
+import { AddStudentsDialog } from "@/components/teacher/AddStudentsDialog";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
 import { deleteStudents, moveStudentsToGroup } from "@/lib/services/teacherService";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
@@ -49,6 +51,7 @@ function StudentsContent() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const noGroupCount = students.filter((s) => !s.groupId).length;
   const atRiskCount = students.filter((s) => s.masteryPercent < 20).length;
@@ -170,9 +173,14 @@ function StudentsContent() {
             </button>
           )}
 
-          <h1 className="text-2xl font-extrabold tracking-tight mb-1">
-            {mode === "groups" ? "O'quvchilar" : listTitle}
-          </h1>
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              {mode === "groups" ? "O'quvchilar" : listTitle}
+            </h1>
+            <Button size="sm" onClick={() => setAddOpen(true)} className="shrink-0">
+              <Plus size={16} /> O&apos;quvchi qo&apos;shish
+            </Button>
+          </div>
           <p className="text-sm text-muted mb-6">
             {mode === "groups"
               ? "Guruhni tanlang yoki ism bo'yicha qidiring."
@@ -450,6 +458,15 @@ function StudentsContent() {
             </div>
           </div>
         )}
+
+        <AddStudentsDialog
+          key={addOpen ? "open" : "closed"}
+          open={addOpen}
+          groups={groups}
+          defaultGroupId={currentGroup?.id}
+          onClose={() => setAddOpen(false)}
+          onCreated={refresh}
+        />
 
         <ConfirmDialog
           open={confirmDelete}

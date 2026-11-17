@@ -235,3 +235,43 @@ export async function fetchAttemptWrongAnswers(attemptId: string): Promise<Wrong
       };
     });
 }
+
+// ── Account tools (create students, reset password) ─────────────────────
+// These call server routes that use the Supabase service key, which never
+// reaches the browser. The server checks that the caller is a teacher.
+
+export interface NewCredential {
+  fullName: string;
+  username: string;
+  password: string;
+  group: string;
+}
+
+async function teacherPost<T>(url: string, body: unknown): Promise<T> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Sessiya topilmadi. Qayta kiring.");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  const json = (await res.json().catch(() => ({}))) as { error?: string } & T;
+  if (!res.ok) throw new Error(json.error ?? "Xatolik yuz berdi. Qayta urinib ko'ring.");
+  return json;
+}
+
+export function createStudents(groupId: string, names: string[]) {
+  return teacherPost<{ created: NewCredential[]; failed: { fullName: string; error: string }[] }>(
+    "/api/teacher/create-students",
+    { groupId, names }
+  );
+}
+
+export function resetStudentPassword(studentId: string) {
+  return teacherPost<{ username: string; fullName: string; password: string }>(
+    "/api/teacher/reset-password",
+    { studentId }
+  );
+}

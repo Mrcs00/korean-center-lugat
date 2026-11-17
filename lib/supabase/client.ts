@@ -9,10 +9,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Supabase Auth is email/password only — we don't collect real emails for
-// this "username + password" flow, so we synthesize a stable, invalid-TLD
-// email from the username. It never leaves the project and is never
-// emailed anywhere (email confirmation is disabled in the dashboard).
-export function usernameToEmail(username: string): string {
-  const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, "");
-  return `${normalized}@users.korean-center-lugat.local`;
-}
+// this "username + password" flow, so a username is turned into a stable
+// fake email (see lib/utils/usernames.ts). It never leaves the project and is
+// never emailed anywhere.
+export { usernameToEmail } from "../utils/usernames";

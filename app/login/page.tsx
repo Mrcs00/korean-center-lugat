@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -84,10 +83,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-xs text-muted text-center mt-6">
-          Hisobingiz yo'qmi?{" "}
-          <Link href="/register" className="font-semibold text-foreground">
-            Ro'yxatdan o'ting
-          </Link>
+          {"Akkauntni o'qituvchingiz beradi. Login va parolni undan oling."}
         </p>
       </Card>
     </div>

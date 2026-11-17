@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, KeyRound, Trash2 } from "lucide-react";
 import { TeacherShell } from "@/components/layout/TeacherShell";
 import { TeacherGate } from "@/components/layout/TeacherGate";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
-import { deleteStudents, moveStudentsToGroup, RealStudent } from "@/lib/services/teacherService";
+import { deleteStudents, moveStudentsToGroup, resetStudentPassword, RealStudent } from "@/lib/services/teacherService";
+import { PasswordResultDialog } from "@/components/teacher/PasswordResultDialog";
 import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
 import { ExamHistory } from "@/components/teacher/ExamHistory";
@@ -20,10 +21,28 @@ export default function TeacherStudentDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState<{ fullName: string; username: string; password: string } | null>(null);
   const { status, students, groups, errorMessage, refresh } = useTeacherData();
   const student = students.find((s) => s.id === params.id);
   // Back goes to this student's group (or the "no group" list), not the groups overview.
   const backHref = student ? `/teacher/students?filter=${student.groupId ?? "none"}` : "/teacher/students";
+
+  const handleReset = async () => {
+    if (!student) return;
+    setResetting(true);
+    setResetError(null);
+    try {
+      setNewPassword(await resetStudentPassword(student.id));
+      setConfirmReset(false);
+    } catch (e) {
+      setResetError((e as Error).message);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!student) return;
@@ -149,6 +168,22 @@ export default function TeacherStudentDetailPage() {
                 )}
               </Card>
 
+              <Card className="p-5 mt-4">
+                <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Parol</p>
+                <p className="text-sm text-muted mb-3">
+                  O&apos;quvchi parolini unutgan bo&apos;lsa, yangi parol yarating va unga bering. Eski parol ishlamay qoladi.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setResetError(null);
+                    setConfirmReset(true);
+                  }}
+                >
+                  <KeyRound size={16} /> Parolni tiklash
+                </Button>
+              </Card>
+
               <Card className="p-5 mt-4 border-red/25">
                 <p className="text-xs font-semibold text-red uppercase tracking-wide mb-2">Xavfli zona</p>
                 <p className="text-sm text-muted mb-3">
@@ -164,6 +199,27 @@ export default function TeacherStudentDetailPage() {
                   <Trash2 size={16} /> Akkauntni o'chirish
                 </Button>
               </Card>
+
+              <ConfirmDialog
+                open={confirmReset}
+                title="Parolni tiklash"
+                confirmLabel="Yangi parol yaratish"
+                busy={resetting}
+                error={resetError}
+                onConfirm={handleReset}
+                onCancel={() => setConfirmReset(false)}
+              >
+                <p>
+                  <span className="font-semibold text-foreground">{student.fullName}</span> uchun yangi parol yaratiladi.
+                  Eski parol ishlamay qoladi.
+                </p>
+              </ConfirmDialog>
+
+              <PasswordResultDialog
+                result={newPassword}
+                groupName={student.group ?? ""}
+                onClose={() => setNewPassword(null)}
+              />
 
               <ConfirmDialog
                 open={confirmDelete}
