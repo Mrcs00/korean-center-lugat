@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { randomInt } from "node:crypto";
+import { randomPassword } from "../utils/passwords";
 
 // Server-only helpers for the teacher's account tools. The service-role key
 // bypasses all security rules, so it must only ever live in a server
@@ -49,11 +49,6 @@ export async function requireTeacher(
   return { admin };
 }
 
-// No look-alike characters (0/o, 1/l/i) so passwords can be read off paper.
-const PASSWORD_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
-
 export function generatePassword(length = 8): string {
-  let out = "";
-  for (let i = 0; i < length; i++) out += PASSWORD_ALPHABET[randomInt(PASSWORD_ALPHABET.length)];
-  return out;
+  return randomPassword(length);
 }

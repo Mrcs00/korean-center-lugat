@@ -5,6 +5,7 @@ import { Check, Copy, Printer, X } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { saveCredentials } from "@/lib/utils/credentialsPrint";
+import { displayLogin } from "@/lib/utils/usernames";
 
 // Shows a freshly generated password once, with copy / print.
 export function PasswordResultDialog({
@@ -21,7 +22,7 @@ export function PasswordResultDialog({
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(`${result.fullName} — login: ${result.username} — parol: ${result.password}`);
+      await navigator.clipboard.writeText(`${result.fullName} — login: ${displayLogin(result.username)} — parol: ${result.password}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -46,7 +47,7 @@ export function PasswordResultDialog({
         <p className="text-sm text-muted mb-3">{result.fullName}</p>
         <div className="rounded-2xl bg-background px-4 py-3 text-center mb-2">
           <p className="text-xs text-muted">Login</p>
-          <p className="font-mono text-base font-semibold">{result.username}</p>
+          <p className="font-mono text-base font-semibold">{displayLogin(result.username)}</p>
           <p className="text-xs text-muted mt-2">Parol</p>
           <p className="font-mono text-2xl font-extrabold tracking-wider">{result.password}</p>
         </div>

@@ -31,3 +31,26 @@ export function usernameBaseFromName(fullName: string): string {
   if (base.length < 3) base = (base + "kc").slice(0, 3).padEnd(3, "0");
   return base.slice(0, 30);
 }
+
+// ── How logins look to people ────────────────────────────────────────────
+// Students see and type logins like "nurjahon@kc.uz". "@kc.uz" is only a
+// label: it is NOT a real mailbox. Underneath, the username ("nurjahon") is
+// still turned into the hidden email above, so existing accounts keep working.
+
+export const LOGIN_DOMAIN = "@kc.uz";
+
+/** What a person typed -> the stored username ("Nurjahon@KC.uz " -> "nurjahon"). */
+export function loginToUsername(input: string): string {
+  let value = input.trim().toLowerCase();
+  if (value.endsWith(LOGIN_DOMAIN)) value = value.slice(0, -LOGIN_DOMAIN.length);
+  return value;
+}
+
+/** The stored username as people should see it ("nurjahon" -> "nurjahon@kc.uz"). */
+export function displayLogin(username: string): string {
+  const clean = username.replace(/^@+/, "");
+  // Older accounts whose login already is an email address keep it as it is.
+  return clean.includes("@") ? clean : `${clean}${LOGIN_DOMAIN}`;
+}
+
+export const USERNAME_PATTERN = /^[a-z0-9._-]{3,30}$/;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Flame, Trophy, BookOpen, Target, LogOut, Trash2, Minus, Plus } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
@@ -11,8 +11,24 @@ import { useStore } from "@/lib/store/progressStore";
 import { masteredCount } from "@/lib/services/statsService";
 import { VOCAB_WORDS } from "@/lib/data/seed";
 import { supabase } from "@/lib/supabase/client";
+import { displayLogin } from "@/lib/utils/usernames";
 
 export default function ProfilePage() {
+  // Show the login people know ("ali@kc.uz"), not the hidden internal address.
+  const [login, setLogin] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return;
+      const { data: row } = await supabase.from("profiles").select("username").eq("id", data.user.id).maybeSingle();
+      if (!cancelled && row?.username) setLogin(displayLogin(row.username));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const router = useRouter();
   const { profile, progress, examAttempts, dailyGoal, setDailyGoal, reset } = useStore();
   const mastered = masteredCount(progress);
@@ -32,7 +48,7 @@ export default function ProfilePage() {
             {profile.fullName.charAt(0)}
           </div>
           <h1 className="text-xl font-extrabold tracking-tight">{profile.fullName}</h1>
-          <p className="text-sm text-muted">{profile.email}</p>
+          <p className="text-sm text-muted">{login}</p>
           <div className="inline-flex items-center gap-1.5 bg-black/[0.04] px-3 py-1 rounded-full mt-3 text-xs font-semibold">
             Daraja {profile.level} · {profile.xp} XP
           </div>
@@ -153,12 +169,17 @@ function PasswordCard() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
+  // The banner on the dashboard links here (#parol): open the card straight away.
+  useEffect(() => {
+    if (window.location.hash === "#parol") setOpen(true);
+  }, []);
+
   const save = async () => {
     if (password.length < 6) return setMessage({ kind: "err", text: "Parol kamida 6 belgi bo'lsin." });
     if (password !== repeat) return setMessage({ kind: "err", text: "Ikkala parol bir xil emas." });
     setBusy(true);
     setMessage(null);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await supabase.auth.updateUser({ password, data: { must_change_password: false } });
     setBusy(false);
     if (error) return setMessage({ kind: "err", text: error.message });
     setMessage({ kind: "ok", text: "Parol o'zgartirildi." });
@@ -170,7 +191,7 @@ function PasswordCard() {
     "w-full h-11 rounded-xl border border-border bg-background px-3.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
 
   return (
-    <Card className="p-5 mb-6">
+    <Card className="p-5 mb-6" id="parol">
       <button className="w-full flex items-center justify-between text-left" onClick={() => setOpen((v) => !v)}>
         <span className="text-sm font-semibold">Parolni o&apos;zgartirish</span>
         <span className="text-muted">{open ? "−" : "+"}</span>

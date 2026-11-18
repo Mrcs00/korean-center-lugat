@@ -1,68 +1,30 @@
-import { usernameBaseFromName, usernameToEmail } from "@/lib/utils/usernames";
-import { generatePassword, jsonResponse, requireTeacher } from "@/lib/server/supabaseAdmin";
+import { jsonResponse, requireTeacher } from "@/lib/server/supabaseAdmin";
+import { MAX_STUDENTS, StudentInput, createStudentsBatch } from "@/lib/server/createStudents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_NAMES = 100;
-
-// Creates student accounts for a teacher: one username + password per name,
-// all placed in the chosen group. Passwords are returned once and never stored
-// in readable form anywhere.
+// Creates student accounts for a teacher. For each student the teacher may
+// choose the login and password; anything left empty is generated. All are
+// placed in the chosen group. Passwords are never stored in readable form.
 export async function POST(request: Request) {
   const auth = await requireTeacher(request);
   if ("error" in auth) return auth.error;
-  const { admin } = auth;
 
-  let body: { names?: unknown; groupId?: unknown };
+  let body: { students?: unknown; groupId?: unknown };
   try {
     body = await request.json();
   } catch {
     return jsonResponse(400, { error: "So'rov noto'g'ri." });
   }
 
-  const names = Array.isArray(body.names)
-    ? body.names.map((n) => String(n).trim().replace(/\s+/g, " ")).filter(Boolean)
-    : [];
+  const students = Array.isArray(body.students) ? (body.students as StudentInput[]) : [];
   const groupId = typeof body.groupId === "string" ? body.groupId : "";
 
-  if (names.length === 0) return jsonResponse(400, { error: "Kamida bitta ism kiriting." });
-  if (names.length > MAX_NAMES) return jsonResponse(400, { error: `Bir marta ko'pi bilan ${MAX_NAMES} ta.` });
-  if (names.some((n) => n.length < 2 || n.length > 60)) {
-    return jsonResponse(400, { error: "Har bir ism 2 dan 60 belgigacha bo'lsin." });
-  }
+  if (students.length === 0) return jsonResponse(400, { error: "Kamida bitta o'quvchi kiriting." });
+  if (students.length > MAX_STUDENTS) return jsonResponse(400, { error: `Bir marta ko'pi bilan ${MAX_STUDENTS} ta.` });
 
-  const { data: group } = await admin.from("groups").select("id, name").eq("id", groupId).maybeSingle();
-  if (!group) return jsonResponse(400, { error: "Guruh topilmadi." });
-
-  // Usernames already taken (so we can add 2, 3, ... where needed).
-  const taken = new Set<string>();
-  const bases = [...new Set(names.map(usernameBaseFromName))];
-  for (const base of bases) {
-    const { data } = await admin.from("profiles").select("username").ilike("username", `${base}%`);
-    (data ?? []).forEach((r) => taken.add(String(r.username).toLowerCase()));
-  }
-
-  const created: { fullName: string; username: string; password: string; group: string }[] = [];
-  const failed: { fullName: string; error: string }[] = [];
-
-  for (const fullName of names) {
-    const base = usernameBaseFromName(fullName);
-    let username = base;
-    for (let n = 2; taken.has(username); n++) username = `${base}${n}`;
-    taken.add(username);
-
-    const password = generatePassword();
-    const { error } = await admin.auth.admin.createUser({
-      email: usernameToEmail(username),
-      password,
-      email_confirm: true,
-      user_metadata: { username, full_name: fullName, role: "student", group_id: group.id },
-    });
-
-    if (error) failed.push({ fullName, error: error.message });
-    else created.push({ fullName, username, password, group: group.name });
-  }
-
-  return jsonResponse(200, { created, failed });
+  const result = await createStudentsBatch(auth.admin, groupId, students);
+  if ("error" in result) return jsonResponse(400, { error: result.error });
+  return jsonResponse(200, result);
 }

@@ -1,4 +1,5 @@
 import type { NewCredential } from "../services/teacherService";
+import { displayLogin } from "./usernames";
 
 // The print page needs the passwords that were just created. They are never
 // stored on the server in readable form, so they are handed over through
@@ -31,5 +32,5 @@ export function clearCredentials(): void {
 }
 
 export function credentialsAsText(list: NewCredential[]): string {
-  return list.map((c) => `${c.fullName} — login: ${c.username} — parol: ${c.password}`).join("\n");
+  return list.map((c) => `${c.fullName} — login: ${displayLogin(c.username)} — parol: ${c.password}`).join("\n");
 }

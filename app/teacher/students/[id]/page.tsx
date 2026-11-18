@@ -13,6 +13,9 @@ import { deleteStudents, moveStudentsToGroup, resetStudentPassword, RealStudent 
 import { PasswordResultDialog } from "@/components/teacher/PasswordResultDialog";
 import { ConfirmDialog } from "@/components/teacher/ConfirmDialog";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
+import { displayLogin } from "@/lib/utils/usernames";
+import { Dices } from "lucide-react";
+import { randomPassword } from "@/lib/utils/passwords";
 import { ExamHistory } from "@/components/teacher/ExamHistory";
 
 export default function TeacherStudentDetailPage() {
@@ -25,6 +28,7 @@ export default function TeacherStudentDetailPage() {
   const [resetting, setResetting] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState<{ fullName: string; username: string; password: string } | null>(null);
+  const [typedPassword, setTypedPassword] = useState(""); // empty = generated
   const { status, students, groups, errorMessage, refresh } = useTeacherData();
   const student = students.find((s) => s.id === params.id);
   // Back goes to this student's group (or the "no group" list), not the groups overview.
@@ -35,7 +39,8 @@ export default function TeacherStudentDetailPage() {
     setResetting(true);
     setResetError(null);
     try {
-      setNewPassword(await resetStudentPassword(student.id));
+      setNewPassword(await resetStudentPassword(student.id, typedPassword.trim() || undefined));
+      setTypedPassword("");
       setConfirmReset(false);
     } catch (e) {
       setResetError((e as Error).message);
@@ -98,7 +103,7 @@ export default function TeacherStudentDetailPage() {
                     {/* mt-10 keeps the name below the colour banner (the avatar overlaps it by 36px) */}
                     <div className="mt-10 min-w-0">
                       <h1 className="text-xl font-extrabold tracking-tight truncate">{student.fullName}</h1>
-                      <p className="text-sm text-muted truncate">@{student.username.replace(/^@+/, "")}</p>
+                      <p className="text-sm text-muted truncate">{displayLogin(student.username)}</p>
                     </div>
                   </div>
 
@@ -203,16 +208,34 @@ export default function TeacherStudentDetailPage() {
               <ConfirmDialog
                 open={confirmReset}
                 title="Parolni tiklash"
-                confirmLabel="Yangi parol yaratish"
+                confirmLabel="Parolni qo'yish"
                 busy={resetting}
                 error={resetError}
                 onConfirm={handleReset}
                 onCancel={() => setConfirmReset(false)}
               >
                 <p>
-                  <span className="font-semibold text-foreground">{student.fullName}</span> uchun yangi parol yaratiladi.
+                  <span className="font-semibold text-foreground">{student.fullName}</span> uchun yangi parol qo&apos;yiladi.
                   Eski parol ishlamay qoladi.
                 </p>
+                <div className="flex gap-1.5 mt-3">
+                  <input
+                    value={typedPassword}
+                    onChange={(e) => setTypedPassword(e.target.value)}
+                    placeholder="Parol (bo'sh = avtomatik)"
+                    autoComplete="off"
+                    className="h-10 flex-1 min-w-0 rounded-lg border border-border bg-background px-2.5 text-sm font-mono text-foreground outline-none focus:border-brand"
+                  />
+                  <button
+                    type="button"
+                    title="Parol yaratish"
+                    aria-label="Parol yaratish"
+                    onClick={() => setTypedPassword(randomPassword())}
+                    className="h-10 w-10 rounded-lg border border-border hover:bg-black/[0.04] flex items-center justify-center text-foreground"
+                  >
+                    <Dices size={16} />
+                  </button>
+                </div>
               </ConfirmDialog>
 
               <PasswordResultDialog

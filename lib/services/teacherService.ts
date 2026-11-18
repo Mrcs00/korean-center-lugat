@@ -247,6 +247,12 @@ export interface NewCredential {
   group: string;
 }
 
+export interface StudentDraft {
+  fullName: string;
+  username?: string; // empty = generated from the name
+  password?: string; // empty = generated
+}
+
 async function teacherPost<T>(url: string, body: unknown): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -262,16 +268,16 @@ async function teacherPost<T>(url: string, body: unknown): Promise<T> {
   return json;
 }
 
-export function createStudents(groupId: string, names: string[]) {
-  return teacherPost<{ created: NewCredential[]; failed: { fullName: string; error: string }[] }>(
-    "/api/teacher/create-students",
-    { groupId, names }
-  );
+export function createStudents(groupId: string, students: StudentDraft[]) {
+  return teacherPost<{
+    created: (NewCredential & { index: number })[];
+    failed: { index: number; fullName: string; error: string }[];
+  }>("/api/teacher/create-students", { groupId, students });
 }
 
-export function resetStudentPassword(studentId: string) {
+export function resetStudentPassword(studentId: string, password?: string) {
   return teacherPost<{ username: string; fullName: string; password: string }>(
     "/api/teacher/reset-password",
-    { studentId }
+    { studentId, password }
   );
 }

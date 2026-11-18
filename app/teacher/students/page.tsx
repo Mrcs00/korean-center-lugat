@@ -25,14 +25,15 @@ import { AddStudentsDialog } from "@/components/teacher/AddStudentsDialog";
 import { useTeacherData } from "@/lib/hooks/useTeacherData";
 import { deleteStudents, moveStudentsToGroup } from "@/lib/services/teacherService";
 import { groupColor, masteryColor } from "@/lib/utils/groupColor";
+import { displayLogin } from "@/lib/utils/usernames";
 
 function errorText(e: unknown): string {
   return (e as { message?: string } | null)?.message ?? "Ko'chirib bo'lmadi. Qayta urinib ko'ring.";
 }
 
-// Logins sometimes already start with "@"; show exactly one.
+// Logins are shown the way students type them: ali@kc.uz
 function handle(username: string): string {
-  return `@${username.replace(/^@+/, "")}`;
+  return displayLogin(username);
 }
 
 function StudentsContent() {

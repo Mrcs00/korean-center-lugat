@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Flame, ChevronRight, Zap, RotateCw, Trophy, TrendingUp, Shuffle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { PasswordBanner } from "@/components/layout/PasswordBanner";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useStore } from "@/lib/store/progressStore";
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="max-w-4xl mx-auto px-5 md:px-8 py-8">
+        <PasswordBanner />
         <div className="flex items-center justify-between mb-7">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">

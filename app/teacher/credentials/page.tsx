@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Printer, Trash2 } from "lucide-react";
 import { NewCredential } from "@/lib/services/teacherService";
 import { clearCredentials, loadCredentials } from "@/lib/utils/credentialsPrint";
+import { displayLogin } from "@/lib/utils/usernames";
 
 // Cut-out slips with each student's login and password. The data comes from
 // the tab that just created the accounts (sessionStorage), nothing is stored.
@@ -65,7 +66,7 @@ export default function CredentialsPrintPage() {
             <p className="text-xs text-gray-600">Guruh: {c.group}</p>
             <div className="mt-2 rounded-lg bg-gray-100 px-3 py-2">
               <p className="text-[11px] text-gray-600">Login</p>
-              <p className="font-mono text-base font-bold">{c.username}</p>
+              <p className="font-mono text-base font-bold">{displayLogin(c.username)}</p>
               <p className="text-[11px] text-gray-600 mt-1.5">Parol</p>
               <p className="font-mono text-lg font-extrabold tracking-wider">{c.password}</p>
             </div>
