@@ -26,10 +26,10 @@ export function jsonResponse(status: number, body: unknown): Response {
   });
 }
 
-/** Only a signed-in teacher gets through. Returns the admin client, or an error response. */
-export async function requireTeacher(
+/** Only a signed-in ADMIN gets through. Returns the admin client and the caller's id, or an error response. */
+export async function requireAdmin(
   request: Request
-): Promise<{ admin: SupabaseClient } | { error: Response }> {
+): Promise<{ admin: SupabaseClient; callerId: string } | { error: Response }> {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return { error: jsonResponse(401, { error: "Kirish kerak." }) };
 
@@ -43,10 +43,12 @@ export async function requireTeacher(
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data.user) return { error: jsonResponse(401, { error: "Sessiya yaroqsiz. Qayta kiring." }) };
 
-  const { data: profile } = await admin.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
-  if (profile?.role !== "teacher") return { error: jsonResponse(403, { error: "Faqat o'qituvchi uchun." }) };
+  const { data: profile } = await admin.from("profiles").select("role, status").eq("id", data.user.id).maybeSingle();
+  if (profile?.role !== "admin" || profile.status !== "active") {
+    return { error: jsonResponse(403, { error: "Faqat admin uchun." }) };
+  }
 
-  return { admin };
+  return { admin, callerId: data.user.id };
 }
 
 export function generatePassword(length = 8): string {

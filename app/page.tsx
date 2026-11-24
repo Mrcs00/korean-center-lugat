@@ -1,116 +1,73 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { BookOpen, Brain, Target, BarChart3, Flame } from "lucide-react";
-import { HeroFlashcards } from "@/components/study/HeroFlashcards";
+import { useRouter } from "next/navigation";
+import { BookOpen, CalendarCheck, ClipboardList, Languages, LineChart, Wallet } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useAuth, homeFor } from "@/lib/auth/AuthProvider";
+import { useSettings } from "@/lib/platform/settings";
 
 const FEATURES = [
-  { icon: BookOpen, label: "TOPIK 3—6 lug'atlari", note: "professional daraja" },
-  { icon: Brain, label: "Spaced Repetition", note: "avtomatik takrorlash" },
-  { icon: Target, label: "Vocabulary Exam", note: "vaqt bilan" },
-  { icon: BarChart3, label: "Progress", note: "so'zma-so'z" },
-  { icon: Flame, label: "Streak", note: "kunlik odat" },
+  { icon: BookOpen, title: "Kurslar", text: "Guruhingiz, ustozingiz va darslaringiz bir joyda." },
+  { icon: ClipboardList, title: "Uy vazifalari", text: "Vazifani topshiring, baho va izohni oling." },
+  { icon: CalendarCheck, title: "Davomat va jadval", text: "Dars kunlari va qatnashishingizni kuzating." },
+  { icon: Languages, title: "Lug'at mashqlari", text: "Flashcard, takrorlash va imtihonlar." },
+  { icon: LineChart, title: "Natijalar", text: "Rivojlanishingiz grafiklar bilan ko'rinadi." },
+  { icon: Wallet, title: "To'lovlar", text: "To'lov holati va tarixi doim ochiq." },
 ];
 
 export default function LandingPage() {
+  const { user, profile, loading } = useAuth();
+  const { settings } = useSettings();
+  const router = useRouter();
+
+  // signed-in people go straight to their own panel
+  useEffect(() => {
+    if (!loading && user && profile) router.replace(homeFor(profile.role));
+  }, [loading, user, profile, router]);
+
   return (
-    <div className="min-h-screen bg-background bg-grain overflow-x-clip">
-      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center font-black shadow-[var(--shadow-brand)]">
-            토
-          </div>
-          <span className="font-bold text-lg tracking-tight">Korean Center Lug'at</span>
+    <div className="min-h-screen bg-page">
+      <header className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-brand flex items-center justify-center font-extrabold text-lg text-[#0f1d33]">K</div>
+          <span className="font-extrabold text-lg tracking-tight">{settings.platform_name}</span>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link
-            href="/login"
-            className="text-sm font-semibold text-muted hover:text-foreground transition-colors"
-          >
+          <Link href="/login" className="h-10 px-5 rounded-xl bg-brand text-[#0f1d33] text-sm font-bold flex items-center hover:bg-brand-dark transition-colors shadow-[var(--shadow-brand)]">
             Kirish
-          </Link>
-          <Link
-            href="/register"
-            className="h-10 px-5 rounded-2xl bg-brand text-foreground text-sm font-semibold flex items-center hover:bg-brand-dark transition-all shadow-[var(--shadow-brand)] active:scale-95"
-          >
-            Boshlash
           </Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 pt-10 md:pt-16 pb-24">
-        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-          >
-            <div className="inline-flex items-center gap-2 bg-brand-soft text-foreground/80 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-              TOPIK 3—6 uchun professional platforma
-            </div>
-            <h1 className="text-4xl md:text-[3.4rem] font-extrabold tracking-tight leading-[1.05]">
-              Yuqori daraja TOPIK lug'atlarini yodlang.{" "}
-              <span className="relative inline-block">
-                <span className="relative z-10">Test orqali</span>
-                <span className="absolute left-0 right-0 bottom-1 h-3 bg-brand/60 -z-0 rounded-sm" />
-              </span>{" "}
-              o'zingizni tekshiring.
-            </h1>
-            <p className="mt-6 text-lg text-muted max-w-lg">
-              TOPIK 3, 4, 5 va 6 darajalari uchun so'zlarni yodlang, avtomatik takrorlang va imtihonga tayyorlaning — bitta professional platformada.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link
-                href="/register"
-                className="h-14 px-8 rounded-2xl bg-brand text-foreground font-bold flex items-center hover:bg-brand-dark transition-all shadow-[var(--shadow-brand)] active:scale-95"
-              >
-                Boshlash
-              </Link>
-              <Link
-                href="/login"
-                className="h-14 px-8 rounded-2xl bg-surface border border-border font-semibold flex items-center hover:border-border-strong transition-colors shadow-[var(--shadow-xs)]"
-              >
-                Kirish
-              </Link>
-            </div>
-
-            <div className="mt-12 flex items-center gap-6 flex-wrap">
-              {FEATURES.map(({ icon: Icon, label, note }, i) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.15 + i * 0.06 }}
-                  className="flex items-center gap-2"
-                >
-                  <div className="h-8 w-8 rounded-xl bg-brand-soft flex items-center justify-center shrink-0">
-                    <Icon size={15} className="text-brand-darker" strokeWidth={2.25} />
-                  </div>
-                  <div className="leading-tight">
-                    <p className="text-xs font-semibold">{label}</p>
-                    <p className="text-[10px] text-muted-soft">{note}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
-          >
-            <HeroFlashcards />
-          </motion.div>
+      <main className="max-w-6xl mx-auto px-6 pt-12 pb-20">
+        <div className="max-w-2xl">
+          <p className="inline-block rounded-full bg-brand-soft text-brand-darker text-xs font-bold px-3 py-1 mb-5">O&apos;quv markazi platformasi</p>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]">
+            Koreys tilini o&apos;rganish,<br />
+            <span className="bg-brand px-2 rounded-lg text-[#0f1d33]">bir joyda.</span>
+          </h1>
+          <p className="text-lg text-muted mt-5">
+            Darslar, uy vazifalari, davomat, lug&apos;at mashqlari va natijalar. Akkauntni o&apos;qituvchingiz beradi.
+          </p>
+          <Link href="/login" className="mt-8 inline-flex h-12 px-7 rounded-xl bg-brand text-[#0f1d33] font-bold items-center hover:bg-brand-dark transition-colors shadow-[var(--shadow-brand)]">
+            Hisobga kirish
+          </Link>
         </div>
 
-        <p className="mt-24 text-sm text-muted text-center max-w-md mx-auto">
-          Bu sayt oddiy dictionary emas — so'z yodlash va o'zingizni imtihon
-          qilish uchun.
-        </p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-16">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="rounded-2xl bg-surface border border-border p-5">
+              <div className="h-10 w-10 rounded-xl bg-brand-soft text-brand-darker flex items-center justify-center mb-3">
+                <f.icon size={20} />
+              </div>
+              <p className="font-bold">{f.title}</p>
+              <p className="text-sm text-muted mt-1">{f.text}</p>
+            </div>
+          ))}
+        </div>
       </main>
     </div>
   );

@@ -1,5 +1,11 @@
-import type { NewCredential } from "../services/teacherService";
 import { displayLogin } from "./usernames";
+
+export interface NewCredential {
+  fullName: string;
+  username: string;
+  password: string;
+  group: string;
+}
 
 // The print page needs the passwords that were just created. They are never
 // stored on the server in readable form, so they are handed over through

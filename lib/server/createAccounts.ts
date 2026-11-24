@@ -2,12 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { USERNAME_PATTERN, loginToUsername, usernameBaseFromName, usernameToEmail } from "../utils/usernames";
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, randomPassword } from "../utils/passwords";
 
-export const MAX_STUDENTS = 100;
+export const MAX_ACCOUNTS = 100;
 
-export interface StudentInput {
+export interface AccountInput {
   fullName?: unknown;
   username?: unknown;
   password?: unknown;
+  phone?: unknown;
+  birthDate?: unknown;
 }
 
 export interface BatchResult {
@@ -16,17 +18,25 @@ export interface BatchResult {
 }
 
 /**
- * Creates the accounts one by one. Each student gets a login and password:
- * the teacher's choice if given, otherwise generated. A problem with one
- * student never stops the others; it is reported in `failed`.
+ * Creates the accounts one by one. Each gets a login and password: the admin's
+ * choice if given, otherwise generated. A problem with one person never stops
+ * the others; it is reported in `failed`.
+ *
+ * Every new account is first created as a student by the database; teachers are
+ * promoted right after (only the server key can set a role).
  */
-export async function createStudentsBatch(
+export async function createAccountsBatch(
   admin: SupabaseClient,
-  groupId: string,
-  students: StudentInput[]
+  role: "student" | "teacher",
+  groupId: string | null,
+  accounts: AccountInput[]
 ): Promise<BatchResult | { error: string }> {
-  const { data: group } = await admin.from("groups").select("id, name").eq("id", groupId).maybeSingle();
-  if (!group) return { error: "Guruh topilmadi." };
+  let groupName = "";
+  if (role === "student" && groupId) {
+    const { data: group } = await admin.from("groups").select("id, name").eq("id", groupId).maybeSingle();
+    if (!group) return { error: "Guruh topilmadi." };
+    groupName = group.name;
+  }
 
   const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
@@ -34,7 +44,7 @@ export async function createStudentsBatch(
   // like a name we may have to generate (so we can add 2, 3, ...).
   const taken = new Set<string>();
   const probes = new Set<string>();
-  students.forEach((s) => {
+  accounts.forEach((s) => {
     const explicit = loginToUsername(str(s.username));
     probes.add(explicit || usernameBaseFromName(str(s.fullName)));
   });
@@ -44,11 +54,11 @@ export async function createStudentsBatch(
     (data ?? []).forEach((r) => taken.add(String(r.username).toLowerCase()));
   }
 
-  const created: { index: number; fullName: string; username: string; password: string; group: string }[] = [];
-  const failed: { index: number; fullName: string; error: string }[] = [];
+  const created: BatchResult["created"] = [];
+  const failed: BatchResult["failed"] = [];
 
-  for (let index = 0; index < students.length; index++) {
-    const s = students[index];
+  for (let index = 0; index < accounts.length; index++) {
+    const s = accounts[index];
     const fullName = str(s.fullName).replace(/\s+/g, " ");
     const fail = (error: string) => failed.push({ index, fullName: fullName || `${index + 1}-qator`, error });
 
@@ -57,7 +67,6 @@ export async function createStudentsBatch(
       continue;
     }
 
-    // Login: the teacher's choice, or generated from the name.
     const requested = loginToUsername(str(s.username));
     let username = requested;
     if (requested) {
@@ -76,7 +85,6 @@ export async function createStudentsBatch(
     }
     taken.add(username);
 
-    // Password: the teacher's choice, or generated.
     const requestedPassword = str(s.password);
     if (requestedPassword && (requestedPassword.length < MIN_PASSWORD_LENGTH || requestedPassword.length > MAX_PASSWORD_LENGTH)) {
       fail(`Parol ${MIN_PASSWORD_LENGTH} dan ${MAX_PASSWORD_LENGTH} belgigacha bo'lsin.`);
@@ -85,26 +93,42 @@ export async function createStudentsBatch(
     }
     const password = requestedPassword || randomPassword();
 
-    const { error } = await admin.auth.admin.createUser({
+    const phone = str(s.phone);
+    const birthDate = /^\d{4}-\d{2}-\d{2}$/.test(str(s.birthDate)) ? str(s.birthDate) : "";
+
+    const { data, error } = await admin.auth.admin.createUser({
       email: usernameToEmail(username),
       password,
       email_confirm: true,
-      // must_change_password makes the student see a "choose your own password" reminder
       user_metadata: {
         username,
         full_name: fullName,
-        role: "student",
-        group_id: group.id,
-        must_change_password: true,
+        role: "student", // the database makes every new account a student anyway
+        ...(role === "student" && groupId ? { group_id: groupId } : {}),
+        ...(phone ? { phone } : {}),
+        ...(birthDate ? { birth_date: birthDate } : {}),
+        must_change_password: true, // shows the "choose your own password" reminder
       },
     });
 
-    if (error) {
+    if (error || !data.user) {
       taken.delete(username);
-      fail(error.message);
-    } else {
-      created.push({ index, fullName, username, password, group: group.name });
+      fail(error?.message ?? "Akkaunt yaratilmadi.");
+      continue;
     }
+
+    if (role === "teacher") {
+      const { error: roleError } = await admin.from("profiles").update({ role: "teacher" }).eq("id", data.user.id);
+      if (roleError) {
+        // do not leave a half-made account behind
+        await admin.auth.admin.deleteUser(data.user.id);
+        taken.delete(username);
+        fail(`Ustoz roli berilmadi: ${roleError.message}`);
+        continue;
+      }
+    }
+
+    created.push({ index, fullName, username, password, group: groupName });
   }
 
   return { created, failed };

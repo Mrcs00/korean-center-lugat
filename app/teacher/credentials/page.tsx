@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Printer, Trash2 } from "lucide-react";
-import { NewCredential } from "@/lib/services/teacherService";
-import { clearCredentials, loadCredentials } from "@/lib/utils/credentialsPrint";
+import { NewCredential, clearCredentials, loadCredentials } from "@/lib/utils/credentialsPrint";
 import { displayLogin } from "@/lib/utils/usernames";
 
 // Cut-out slips with each student's login and password. The data comes from

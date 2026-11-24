@@ -114,15 +114,31 @@ the brief — the architecture (typed services + isolated data layer) is set
 up so each of those can be added incrementally without refactoring existing
 pages.
 
-## Student accounts (teacher creates them)
+## Platform: Admin / Ustoz / O'quvchi
 
-Public sign-up is closed. Teachers create student accounts from the teacher
-panel (O'quvchilar → "O'quvchi qo'shish") and can reset a password from a
-student's page. This needs a server-side secret:
+The site is an o'quv markaz platform with three panels:
 
-- Vercel → Project → Settings → Environment Variables → add
-  `SUPABASE_SERVICE_ROLE_KEY` (Supabase → Project Settings → API → `service_role`).
-  Never commit it and never prefix it with `NEXT_PUBLIC_`. Redeploy afterwards.
-- Run `docs/security-fix.sql` once in the Supabase SQL Editor.
-- In Supabase → Authentication → Sign In / Providers, turn OFF
-  "Allow new users to sign up".
+- `/admin` — groups, students, teachers, courses, attendance, homework, payments,
+  statistics, announcements, branches, settings.
+- `/teacher` — only the teacher's own groups: attendance, homework + grading,
+  schedule, announcements, statistics.
+- `/student` — home, courses, homework, attendance, schedule, payments, contact,
+  plus the vocabulary tools (flashcards, review, tests, exams).
+
+Public sign-up is closed. The admin creates student and teacher accounts
+(login is shown as `name@kc.uz`; it is only a login name, not a mailbox).
+
+### Setup / upgrade
+1. Supabase → Database → Backups: take a backup.
+2. Supabase → SQL Editor: run `docs/platform-upgrade.sql` (safe to run again).
+   If more than one teacher account existed before, promote yourself to admin:
+   `update profiles set role = 'admin' where username = 'YOUR_LOGIN';`
+3. Vercel → Settings → Environment Variables: `SUPABASE_SERVICE_ROLE_KEY`
+   (the Supabase *secret* key, never `NEXT_PUBLIC_`). Redeploy.
+4. Supabase → Authentication → Sign In / Providers: turn OFF
+   "Allow new users to sign up".
+
+Access rules live in the database (Row Level Security), not in the pages:
+a teacher sees only the groups they teach, a student only their own data, the
+admin everything. Files (homework, submissions, materials) go to the private
+bucket `homework-files`, readable only by the people allowed to see them.

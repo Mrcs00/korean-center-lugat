@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase, usernameToEmail } from "@/lib/supabase/client";
 import { LOGIN_DOMAIN, loginToUsername } from "@/lib/utils/usernames";
+import { homeFor } from "@/lib/auth/AuthProvider";
 import { useStore } from "@/lib/store/progressStore";
 
 export default function LoginPage() {
@@ -37,12 +38,19 @@ export default function LoginPage() {
 
     const { data: profileRow } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, role, status")
       .eq("id", data.user.id)
       .single();
 
+    if (profileRow?.status === "inactive") {
+      await supabase.auth.signOut();
+      setError("Akkauntingiz faol emas. Markaz bilan bog'laning.");
+      setLoading(false);
+      return;
+    }
+
     syncAuthProfile({ fullName: profileRow?.full_name ?? cleanUsername, email });
-    router.push("/dashboard");
+    router.push(homeFor(profileRow?.role));
   };
 
   return (
@@ -52,7 +60,7 @@ export default function LoginPage() {
           <div className="h-9 w-9 rounded-2xl bg-brand flex items-center justify-center font-black">
             토
           </div>
-          <span className="font-bold text-lg">Korean Center Lug'at</span>
+          <span className="font-bold text-lg">Korean Center</span>
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight">Xush kelibsiz</h1>
         <p className="text-sm text-muted mt-1 mb-6">Hisobingizga kiring</p>
