@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Target, Plus, Clock, Trash2, X, Users, BookOpenCheck } from "lucide-react";
+import { Target, Plus, Clock, Trash2, X, Users, BookOpenCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { VOCAB_SETS } from "@/lib/data/seed";
@@ -15,6 +15,7 @@ import {
   deleteAssignment,
 } from "@/lib/services/assignmentService";
 import { bookWords, examSetTitle, rangeLabel, setWordsInOrder } from "@/lib/utils/examSets";
+import { VocabResultsTable } from "./VocabResultsTable";
 
 // Groups the huge flat VOCAB_SETS list into <optgroup> sections so the
 // picker stays usable across TOPIK reading/listening sets and every
@@ -49,9 +50,12 @@ function toInt(value: string): number | null {
 
 // Vocabulary assignments (sets / ranges / book exams) sent to groups. The groups
 // passed in are the ones the signed-in teacher (or the admin) may use.
+// The student solves the tests himself and the system scores them; here the
+// teacher only sees the results (open a card -> "Natijalar").
 export function VocabAssignmentsView({ groups }: { groups: GroupFull[] }) {
   const groupedSets = useGroupedSetOptions();
   const [formOpen, setFormOpen] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const [assignments, setAssignments] = useState<RealAssignment[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -174,7 +178,7 @@ export function VocabAssignmentsView({ groups }: { groups: GroupFull[] }) {
             </Button>
           </div>
           <p className="text-sm text-muted mb-6">
-            Guruhlarga muddatli lug&apos;at topshiriqlari yoki kitobning umumiy imtihonini yuboring.
+            Guruhlarga muddatli lug&apos;at topshiriqlari yoki kitobning umumiy imtihonini yuboring. O&apos;quvchi o&apos;zi yechadi, tizim o&apos;zi hisoblaydi. Natijani kartadagi &quot;Natijalar&quot; tugmasidan ko&apos;rasiz.
           </p>
 
           <div className="flex flex-col gap-3">
@@ -193,6 +197,7 @@ export function VocabAssignmentsView({ groups }: { groups: GroupFull[] }) {
                 : a.wordFrom && a.wordTo
                 ? rangeLabel(a.wordFrom, a.wordTo)
                 : "Butun to'plam";
+              const open = openId === a.id;
               return (
                 <Card key={a.id} className="p-5">
                   <div className="flex items-center justify-between">
@@ -227,9 +232,18 @@ export function VocabAssignmentsView({ groups }: { groups: GroupFull[] }) {
                       <Trash2 size={15} />
                     </button>
                   </div>
-                  <p className="text-[11px] text-muted-soft mt-3">
-                    {isBookExam ? "O'tish bali" : "Talab qilingan mastery"}: {a.minimumMastery}%
-                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-[11px] text-muted-soft">
+                      {isBookExam ? "O'tish bali" : "Talab qilingan mastery"}: {a.minimumMastery}%
+                    </p>
+                    <button
+                      onClick={() => setOpenId(open ? null : a.id)}
+                      className="h-8 px-3 rounded-lg border border-border hover:border-border-strong text-xs font-semibold flex items-center gap-1"
+                    >
+                      Natijalar {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                  </div>
+                  {open && <VocabResultsTable a={a} />}
                 </Card>
               );
             })}

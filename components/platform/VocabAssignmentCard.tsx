@@ -52,7 +52,7 @@ export function VocabAssignmentCard({ a }: { a: RealAssignment }) {
       <div className={`mt-4 ${isBookExam ? "flex gap-2" : "grid grid-cols-2 gap-2"}`}>
         {isBookExam ? (
           <Link href={`/exam/seoul-hangugo/${a.bookId}/umumiy`} className={`${actionCls} bg-brand-soft border-transparent`}>
-            <GraduationCap size={14} /> Imtihonni boshlash
+            <GraduationCap size={14} /> Topshirish
           </Link>
         ) : (
           <>
@@ -65,8 +65,8 @@ export function VocabAssignmentCard({ a }: { a: RealAssignment }) {
             <Link href={`/quiz?set=${a.setId}${rangeQuery}`} className={actionCls}>
               <ListChecks size={14} /> Test
             </Link>
-            <Link href={`/exam/${a.setId}${hasRange ? `?from=${a.wordFrom}&to=${a.wordTo}` : ""}`} className={actionCls}>
-              <GraduationCap size={14} /> Imtihon
+            <Link href={`/exam/${a.setId}${hasRange ? `?from=${a.wordFrom}&to=${a.wordTo}` : ""}`} className={`${actionCls} bg-brand-soft border-transparent`}>
+              <GraduationCap size={14} /> Topshirish
             </Link>
           </>
         )}
