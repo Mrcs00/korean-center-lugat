@@ -26,6 +26,7 @@ import { displayLogin } from "@/lib/utils/usernames";
 import { randomPassword } from "@/lib/utils/passwords";
 import { masteryColor } from "@/lib/utils/groupColor";
 import type { Profile } from "@/lib/platform/types";
+import { MonthlyReport } from "./MonthlyReport";
 
 // ── students list ───────────────────────────────────────────────────────────
 export function StudentsListView({ role, groups }: { role: StaffRole; groups: GroupFull[] }) {
@@ -105,7 +106,7 @@ export function StudentsListView({ role, groups }: { role: StaffRole; groups: Gr
 }
 
 // ── one student ─────────────────────────────────────────────────────────────
-type Tab = "overview" | "attendance" | "homework" | "exams" | "words" | "payments";
+type Tab = "overview" | "attendance" | "homework" | "exams" | "words" | "payments" | "report";
 
 export function StudentProfileView({ role, id }: { role: StaffRole; id: string }) {
   const router = useRouter();
@@ -189,6 +190,7 @@ export function StudentProfileView({ role, id }: { role: StaffRole; id: string }
           { id: "exams", label: "Imtihonlar", count: l?.attempts.length },
           { id: "words", label: "Xato so'zlar" },
           { id: "payments", label: "To'lovlar" },
+          { id: "report", label: "Oylik hisobot" },
         ]}
       />
 
@@ -299,6 +301,8 @@ export function StudentProfileView({ role, id }: { role: StaffRole; id: string }
           ))}
         </Panel>
       )}
+
+      {tab === "report" && (groups.loading || members.loading ? <Spinner /> : <MonthlyReport studentId={id} studentName={p.full_name} groups={myGroups} />)}
 
       {isAdmin && (
         <EditProfileModal open={edit} profile={p} phone={phone ?? ""} birth={details.data?.[id]?.birth_date ?? ""} branches={branches.data ?? []} onClose={() => setEdit(false)} onSaved={() => { profile.reload(); details.reload(); }} />
