@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge, Field, Input, Modal, Textarea } from "@/components/platform/ui";
 import { FileList } from "@/components/platform/FileUploader";
 import { useToast } from "@/components/platform/Toast";
-import { reviewSubmission } from "@/lib/platform/api";
+import { reviewStudent, reviewSubmission } from "@/lib/platform/api";
 import { SUBMISSION } from "@/lib/platform/labels";
 import { formatDateTime } from "@/lib/platform/format";
 import type { Homework, Submission } from "@/lib/platform/types";
@@ -20,7 +20,7 @@ export function ReviewDialog({
 }: {
   open: boolean;
   homework: Homework | null;
-  submission: Submission | null;
+  submission: Submission | null; // id === "" = the student has no row yet (never pressed "Topshirish")
   studentName: string;
   onClose: () => void;
   onSaved: () => void;
@@ -40,8 +40,10 @@ export function ReviewDialog({
 
   if (!homework || !submission) return null;
 
+  const notHanded = submission.status === "draft"; // never submitted (empty or only a draft)
+
   const act = async (status: "graded" | "needs_revision" | "reviewing") => {
-    const value = score.trim() === "" ? null : Number(score);
+    const value = score.trim() === "" ? null : Number(score.replace(",", "."));
     if (status === "graded" && (value === null || Number.isNaN(value) || value < 0 || value > homework.points)) {
       toast.error(`Ball 0 dan ${homework.points} gacha bo'lsin.`);
       return;
@@ -52,7 +54,9 @@ export function ReviewDialog({
     }
     setBusy(true);
     try {
-      await reviewSubmission(submission.id, { status, score: status === "graded" ? value : null, feedback: feedback.trim() || null, mistakes: mistakes.trim() || null });
+      const data = { status, score: status === "graded" ? value : null, feedback: feedback.trim() || null, mistakes: mistakes.trim() || null };
+      if (submission.id) await reviewSubmission(submission.id, data);
+      else await reviewStudent(homework.id, submission.student_id, data);
       toast.success(status === "graded" ? "Baholandi." : status === "needs_revision" ? "Qayta ishlashga qaytarildi." : "Tekshirilmoqda deb belgilandi.");
       onSaved();
       onClose();
@@ -79,17 +83,25 @@ export function ReviewDialog({
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-          <Badge tone={SUBMISSION[submission.status].tone}>{SUBMISSION[submission.status].label}</Badge>
-          <span>Urinish: {submission.attempt}</span>
+          {notHanded ? <Badge tone="gray">Topshirmagan</Badge> : <Badge tone={SUBMISSION[submission.status].tone}>{SUBMISSION[submission.status].label}</Badge>}
+          {!notHanded && <span>Urinish: {submission.attempt}</span>}
           {submission.submitted_at && <span>Topshirilgan: {formatDateTime(submission.submitted_at)}</span>}
         </div>
 
-        <div>
-          <p className="text-xs font-semibold text-muted mb-1.5">O&apos;quvchi javobi</p>
-          <div className="rounded-xl bg-background border border-border px-4 py-3 text-sm whitespace-pre-line min-h-[3.5rem]">
-            {submission.answer?.trim() || <span className="text-muted-soft">Matn yozilmagan.</span>}
+        {notHanded && (
+          <p className="rounded-xl bg-background border border-border px-4 py-3 text-sm text-muted">
+            O&apos;quvchi tugmani bosmagan. Vazifani o&apos;zingiz ko&apos;rgan bo&apos;lsangiz, ball va izohni shu yerga yozing.
+          </p>
+        )}
+
+        {(!notHanded || submission.answer?.trim()) && (
+          <div>
+            <p className="text-xs font-semibold text-muted mb-1.5">O&apos;quvchi javobi</p>
+            <div className="rounded-xl bg-background border border-border px-4 py-3 text-sm whitespace-pre-line min-h-[3.5rem]">
+              {submission.answer?.trim() || <span className="text-muted-soft">Matn yozilmagan.</span>}
+            </div>
           </div>
-        </div>
+        )}
 
         {submission.attachments.length > 0 && (
           <div>

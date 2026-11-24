@@ -343,11 +343,27 @@ export async function saveSubmission(
   );
 }
 
-export async function reviewSubmission(
-  id: string,
-  data: { status: Extract<SubmissionStatus, "reviewing" | "needs_revision" | "graded">; score?: number | null; feedback?: string | null; mistakes?: string | null }
-): Promise<void> {
+type ReviewData = { status: Extract<SubmissionStatus, "reviewing" | "needs_revision" | "graded">; score?: number | null; feedback?: string | null; mistakes?: string | null };
+
+export async function reviewSubmission(id: string, data: ReviewData): Promise<void> {
   await q(supabase.from("homework_submissions").update({ status: data.status, score: data.score ?? null, feedback: data.feedback ?? null, mistakes: data.mistakes ?? null }).eq("id", id));
+}
+
+/**
+ * Review a student who never pressed "Topshirish": the row is created first
+ * (as an empty draft, which the teacher is allowed to insert), then updated,
+ * so the database triggers (graded_at, student notification) run as usual.
+ */
+export async function reviewStudent(homeworkId: string, studentId: string, data: ReviewData): Promise<void> {
+  let row = await q<{ id: string } | null>(
+    supabase.from("homework_submissions").select("id").eq("homework_id", homeworkId).eq("student_id", studentId).maybeSingle()
+  );
+  if (!row) {
+    row = await q<{ id: string }>(
+      supabase.from("homework_submissions").insert({ homework_id: homeworkId, student_id: studentId, status: "draft" }).select("id").single()
+    );
+  }
+  await reviewSubmission(row.id, data);
 }
 
 // ── Materials ───────────────────────────────────────────────────────────────

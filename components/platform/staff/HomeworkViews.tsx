@@ -15,6 +15,7 @@ import { allMemberships, deleteHomework, getHomework, listHomework, listMembers,
 import { baseOf, type StaffRole } from "@/lib/platform/staff";
 import { HOMEWORK_TYPES, SUBMISSION } from "@/lib/platform/labels";
 import { deadlineHint, formatDateTime } from "@/lib/platform/format";
+import { buildGradingQueue, emptySubmission } from "@/lib/platform/homework";
 import type { Homework, Profile, Submission } from "@/lib/platform/types";
 
 // ── list of homework (teacher: own groups, admin: all) ──────────────────────
@@ -153,7 +154,8 @@ export function HomeworkReviewView({ role, id }: { role: StaffRole; id: string }
         {subs.error && <ErrorNote message={subs.error} />}
         <div className="flex flex-col">
           {rows.map(({ m, sub }) => {
-            const status = sub ? SUBMISSION[sub.status] : null;
+            const status = sub && sub.status !== "draft" ? SUBMISSION[sub.status] : null;
+            const isHanded = Boolean(sub && sub.status !== "draft");
             const late = sub?.submitted_at && h.due_at && new Date(sub.submitted_at) > new Date(h.due_at);
             return (
               <div key={m.student_id} className="flex flex-wrap items-center gap-3 py-3 border-b border-border last:border-0">
@@ -166,13 +168,13 @@ export function HomeworkReviewView({ role, id }: { role: StaffRole; id: string }
                 </div>
                 {sub?.status === "graded" && <span className="font-bold text-green text-sm">{sub.score ?? "—"}/{h.points}</span>}
                 {status ? <Badge tone={status.tone}>{status.label}</Badge> : <Badge tone="gray">Topshirmagan</Badge>}
-                {sub && sub.status !== "draft" ? (
-                  <Button size="sm" variant="secondary" onClick={() => setReview({ sub, name: m.profile?.full_name ?? "O'quvchi" })}>
-                    <ClipboardCheck size={14} /> {sub.status === "graded" ? "Ko'rish" : "Tekshirish"}
-                  </Button>
-                ) : (
-                  <span className="w-[98px]" />
-                )}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setReview({ sub: sub ?? emptySubmission(h.id, m.student_id), name: m.profile?.full_name ?? "O'quvchi" })}
+                >
+                  <ClipboardCheck size={14} /> {sub?.status === "graded" ? "Ko'rish" : isHanded ? "Tekshirish" : "Baholash"}
+                </Button>
               </div>
             );
           })}
@@ -186,39 +188,42 @@ export function HomeworkReviewView({ role, id }: { role: StaffRole; id: string }
 }
 
 // ── queue of submissions waiting for a grade ────────────────────────────────
+// Handed-in work is always listed. After the deadline, students who did not
+// press "Topshirish" are listed too (they show their work to the teacher).
 export function GradingView({ groups }: { groups: GroupFull[] }) {
   const ids = groups.map((g) => g.id);
   const hw = useLoad(() => listHomework(ids), [ids.join(",")]);
   const subs = useLoad(() => listSubmissions((hw.data ?? []).map((h) => h.id)), [(hw.data ?? []).length]);
+  const members = useLoad(() => allMemberships(), []);
   const people = useLoad(() => listProfiles("student"), []);
   const [review, setReview] = useState<{ sub: Submission; name: string; hw: Homework } | null>(null);
 
-  const pending = (subs.data ?? []).filter((s) => s.status === "submitted" || s.status === "reviewing").sort((a, b) => (a.submitted_at ?? "").localeCompare(b.submitted_at ?? ""));
+  const pending = buildGradingQueue(hw.data ?? [], subs.data ?? [], members.data ?? []);
   const nameOf = (id: string, ps: Profile[] | null) => ps?.find((p) => p.id === id)?.full_name ?? "O'quvchi";
 
   return (
     <Page>
       <PageHeader title="Baholash" subtitle="Tekshirilishi kerak bo'lgan topshiriqlar" />
-      {(hw.error || subs.error) && <ErrorNote message={(hw.error ?? subs.error) as string} />}
-      {hw.loading || subs.loading ? (
+      {(hw.error || subs.error || members.error) && <ErrorNote message={(hw.error ?? subs.error ?? members.error) as string} />}
+      {hw.loading || subs.loading || members.loading ? (
         <Spinner />
       ) : pending.length === 0 ? (
-        <EmptyState icon={ClipboardCheck} title="Tekshiriladigan topshiriq yo'q" text="Yangi topshiriq kelganda shu yerda ko'rinadi." />
+        <EmptyState icon={ClipboardCheck} title="Tekshiriladigan topshiriq yo'q" text="Yangi topshiriq kelganda yoki muddat o'tganda shu yerda ko'rinadi." />
       ) : (
         <div className="flex flex-col gap-3">
-          {pending.map((s) => {
-            const h = (hw.data ?? []).find((x) => x.id === s.homework_id);
-            if (!h) return null;
-            const name = nameOf(s.student_id, people.data);
+          {pending.map((item) => {
+            const name = nameOf(item.studentId, people.data);
             return (
-              <button key={s.id} onClick={() => setReview({ sub: s, name, hw: h })} className="text-left rounded-2xl bg-surface border border-border p-4 hover:border-border-strong flex flex-wrap items-center gap-3">
+              <button key={item.key} onClick={() => setReview({ sub: item.sub, name, hw: item.hw })} className="text-left rounded-2xl bg-surface border border-border p-4 hover:border-border-strong flex flex-wrap items-center gap-3">
                 <Avatar name={name} size={40} />
                 <div className="min-w-0 flex-1 basis-48">
                   <p className="font-bold text-sm">{name}</p>
-                  <p className="text-xs text-muted truncate">{h.title} · {groups.find((g) => g.id === h.group_id)?.name}</p>
+                  <p className="text-xs text-muted truncate">{item.hw.title} · {groups.find((g) => g.id === item.hw.group_id)?.name}</p>
                 </div>
-                <span className="text-xs text-muted">{formatDateTime(s.submitted_at)}</span>
-                <Badge tone={SUBMISSION[s.status].tone}>{SUBMISSION[s.status].label}</Badge>
+                <span className="text-xs text-muted">
+                  {item.handed ? formatDateTime(item.sub.submitted_at) : `Muddat: ${formatDateTime(item.hw.due_at)}`}
+                </span>
+                {item.handed ? <Badge tone={SUBMISSION[item.sub.status].tone}>{SUBMISSION[item.sub.status].label}</Badge> : <Badge tone="gray">Topshirmagan</Badge>}
               </button>
             );
           })}
