@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
@@ -18,6 +18,7 @@ export default function TableViewPage() {
 function TableViewContent() {
   const params = useParams<{ setId: string }>();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const set = VOCAB_SETS.find((s) => s.id === params.setId);
   const allWords = VOCAB_WORDS.filter((w) => w.setId === params.setId).sort((a, b) => a.order - b.order);
   // A teacher's assignment opens this page with ?from=&to= to show only those words.
@@ -25,6 +26,12 @@ function TableViewContent() {
   const words = range ? allWords.slice(range.from - 1, range.to) : allWords;
   const firstNumber = range ? range.from : 1;
   const printHref = `/vocabulary/${params.setId}/print${range ? `?from=${range.from}&to=${range.to}` : ""}`;
+
+  // Back to wherever the student came from (e.g. the homework list); fall back to the set page.
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) router.back();
+    else router.push(`/vocabulary/${params.setId}`);
+  };
 
   if (!set) {
     return (
@@ -41,12 +48,13 @@ function TableViewContent() {
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-10 bg-surface border-b border-border px-5 py-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link
-            href={`/vocabulary/${set.id}`}
+          <button
+            type="button"
+            onClick={goBack}
             className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
           >
             <ArrowLeft size={16} /> Orqaga
-          </Link>
+          </button>
           <Link
             href={printHref}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:underline"

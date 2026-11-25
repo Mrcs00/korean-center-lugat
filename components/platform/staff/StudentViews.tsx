@@ -27,6 +27,7 @@ import { randomPassword } from "@/lib/utils/passwords";
 import { masteryColor } from "@/lib/utils/groupColor";
 import type { Profile } from "@/lib/platform/types";
 import { MonthlyReport } from "./MonthlyReport";
+import { StudentVocabList } from "./StudentVocabList";
 
 // ── students list ───────────────────────────────────────────────────────────
 export function StudentsListView({ role, groups }: { role: StaffRole; groups: GroupFull[] }) {
@@ -263,7 +264,8 @@ export function StudentProfileView({ role, id }: { role: StaffRole; id: string }
       )}
 
       {tab === "homework" && (
-        <Panel>
+        <div className="flex flex-col gap-6">
+        <Panel title="Uy vazifalari">
           {subRows.length === 0 ? <EmptyState title="Topshirilgan vazifa yo'q" /> : subRows.map((s) => {
             const h = (homework.data ?? []).find((x) => x.id === s.homework_id);
             return (
@@ -275,6 +277,8 @@ export function StudentProfileView({ role, id }: { role: StaffRole; id: string }
             );
           })}
         </Panel>
+        <StudentVocabList studentId={id} groups={myGroups} />
+        </div>
       )}
 
       {tab === "exams" && (l ? <ExamHistory attempts={l.attempts} /> : <Spinner />)}

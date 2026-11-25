@@ -22,6 +22,7 @@ import {
 } from "@/lib/services/examSession";
 import { RealAssignment, fetchAssignmentsForGroup } from "@/lib/services/assignmentService";
 import { bookExamSetId, bookWords } from "@/lib/utils/examSets";
+import { choiceOnly } from "@/lib/utils/examQuestions";
 import { supabase } from "@/lib/supabase/client";
 import { ExamAnswer, ExamAttempt } from "@/lib/types";
 
@@ -98,8 +99,9 @@ export default function BookExamPage() {
   const startNew = (count: number) => {
     const key = sessionKeyRef.current;
     // Random words from the whole book, in random order. The wrong-answer
-    // choices are also drawn from the whole book.
-    const qs = buildQuiz(words, Math.min(count, words.length), { selectionMode: "random" });
+    // choices are also drawn from the whole book. Test only: typing
+    // questions become multiple-choice.
+    const qs = choiceOnly(buildQuiz(words, Math.min(count, words.length), { selectionMode: "random" }), words);
     const now = Date.now();
     const fresh: ExamSession = {
       questions: qs,

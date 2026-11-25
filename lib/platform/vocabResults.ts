@@ -1,6 +1,6 @@
 import { supabase } from "../supabase/client";
 import { listMembers } from "./api";
-import type { RealAssignment } from "../services/assignmentService";
+import { fetchAssignmentsForGroup, type RealAssignment } from "../services/assignmentService";
 import { setWordsInOrder } from "../utils/examSets";
 
 // Teacher-side results of a vocabulary assignment. Read-only: it only reads
@@ -105,4 +105,30 @@ export async function loadVocabResults(a: RealAssignment): Promise<VocabResults>
     startedCount: rows.filter((r) => r.status !== "none").length,
     averagePct: Math.round(rows.reduce((s, r) => s + r.pct, 0) / rows.length),
   };
+}
+
+export interface StudentVocabItem {
+  a: RealAssignment;
+  result: StudentResult | null;
+}
+
+/** Every vocabulary assignment sent to the student's groups, with this student's own result. */
+export async function loadStudentVocab(studentId: string, groupIds: string[]): Promise<StudentVocabItem[]> {
+  if (groupIds.length === 0) return [];
+  const assignments = (await Promise.all(groupIds.map((id) => fetchAssignmentsForGroup(id)))).flat();
+  const items = await Promise.all(
+    assignments.map(async (a) => {
+      const res = await loadVocabResults(a);
+      return { a, result: res.rows.find((r) => r.studentId === studentId) ?? null };
+    })
+  );
+  // newest deadline first, no-deadline last
+  return items.sort((x, y) => {
+    const dx = x.a.deadline ?? "";
+    const dy = y.a.deadline ?? "";
+    if (!dx && !dy) return 0;
+    if (!dx) return 1;
+    if (!dy) return -1;
+    return dy.localeCompare(dx);
+  });
 }

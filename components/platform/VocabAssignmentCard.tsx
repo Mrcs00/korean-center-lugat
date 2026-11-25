@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpenCheck, Clock, GraduationCap, Layers, ListChecks, Table, Target } from "lucide-react";
+import { BookOpenCheck, Clock, GraduationCap, Table, Target } from "lucide-react";
 import type { RealAssignment } from "@/lib/services/assignmentService";
 import { examSetTitle, rangeLabel, rangeProgressPercent } from "@/lib/utils/examSets";
 import { useStore } from "@/lib/store/progressStore";
@@ -16,7 +16,6 @@ export function VocabAssignmentCard({ a }: { a: RealAssignment }) {
   const { progress, examAttempts } = useStore();
   const isBookExam = a.kind === "book_exam" && Boolean(a.bookId);
   const hasRange = Boolean(a.wordFrom && a.wordTo);
-  const rangeQuery = hasRange ? `&from=${a.wordFrom}&to=${a.wordTo}` : "";
 
   const attempts = examAttempts.filter((x) => x.setId === a.setId);
   const bestScore = attempts.reduce((best, x) => Math.max(best, Math.round((x.correctCount / Math.max(x.totalQuestions, 1)) * 100)), 0);
@@ -56,14 +55,8 @@ export function VocabAssignmentCard({ a }: { a: RealAssignment }) {
           </Link>
         ) : (
           <>
-            <Link href={`/flashcards?set=${a.setId}${rangeQuery}`} className={actionCls}>
-              <Layers size={14} /> Flashcard
-            </Link>
             <Link href={`/vocabulary/${a.setId}/table${hasRange ? `?from=${a.wordFrom}&to=${a.wordTo}` : ""}`} className={actionCls}>
-              <Table size={14} /> Jadval
-            </Link>
-            <Link href={`/quiz?set=${a.setId}${rangeQuery}`} className={actionCls}>
-              <ListChecks size={14} /> Test
+              <Table size={14} /> Lug&apos;atni ko&apos;rish
             </Link>
             <Link href={`/exam/${a.setId}${hasRange ? `?from=${a.wordFrom}&to=${a.wordTo}` : ""}`} className={`${actionCls} bg-brand-soft border-transparent`}>
               <GraduationCap size={14} /> Topshirish

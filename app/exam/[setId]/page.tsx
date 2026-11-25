@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/lib/supabase/client";
 import { ExamAnswer, ExamAttempt } from "@/lib/types";
 import { parseRange } from "@/lib/utils/examSets";
+import { choiceOnly } from "@/lib/utils/examQuestions";
 
 export default function ExamRunnerPage() {
   return (
@@ -75,7 +76,8 @@ function ExamRunnerContent() {
   const startNew = ({ from, to }: CountSelection) => {
     const key = sessionKeyRef.current;
     const chosen = words.slice(from - 1, to);
-    const qs = buildQuiz(chosen, chosen.length, { selectionMode: "ordered" });
+    // Test only: typing questions become multiple-choice.
+    const qs = choiceOnly(buildQuiz(chosen, chosen.length, { selectionMode: "ordered" }), words);
     const now = Date.now();
     const fresh: ExamSession = {
       questions: qs,
