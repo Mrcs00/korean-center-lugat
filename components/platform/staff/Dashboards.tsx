@@ -33,6 +33,8 @@ export function TeacherDashboard({ groups, loading, error }: { groups: GroupFull
   const pending = (subs.data ?? []).filter((s) => s.status === "submitted" || s.status === "reviewing");
   const totalStudents = (students.data ?? []).length;
   const rate = attendanceRate(att.data ?? []);
+  // attendance already saved for a group today
+  const markedToday = (groupId: string) => (att.data ?? []).filter((r) => r.lesson?.group_id === groupId && r.lesson?.lesson_date === today);
 
   return (
     <Page wide>
@@ -58,12 +60,26 @@ export function TeacherDashboard({ groups, loading, error }: { groups: GroupFull
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
-                    {todays.map((s) => (
-                      <div key={s.group.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-brand-tint border border-brand/30 px-4 py-3">
-                        <div className="min-w-0 flex-1 basis-40"><p className="font-bold truncate">{s.group.name}</p><p className="text-xs text-muted">{timeRange(s.start_time, s.end_time) || "Vaqti belgilanmagan"} · {s.group.memberCount} ta o&apos;quvchi</p></div>
-                        <Link href="/teacher/attendance" className="h-9 px-4 rounded-xl bg-brand text-[#0f1d33] text-sm font-bold flex items-center">Davomat</Link>
-                      </div>
-                    ))}
+                    {todays.map((s) => {
+                      const rows = markedToday(s.group.id);
+                      const done = rows.length > 0;
+                      const came = rows.filter((r) => r.status === "present" || r.status === "late").length;
+                      // opens the attendance page with this group and today already selected
+                      const href = `/teacher/attendance?group=${s.group.id}&date=${today}`;
+                      return (
+                        <div key={s.group.id} className={`flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 ${done ? "bg-green-soft border-border" : "bg-brand-tint border-brand/30"}`}>
+                          <div className="min-w-0 flex-1 basis-40"><p className="font-bold truncate">{s.group.name}</p><p className="text-xs text-muted">{timeRange(s.start_time, s.end_time) || "Vaqti belgilanmagan"} · {s.group.memberCount} ta o&apos;quvchi</p></div>
+                          {done ? (
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-green">Belgilangan ✓ · {came}/{rows.length} keldi</span>
+                              <Link href={href} className="text-xs font-semibold text-brand-darker">Tahrirlash</Link>
+                            </div>
+                          ) : (
+                            <Link href={href} className="h-9 px-4 rounded-xl bg-brand text-[#0f1d33] text-sm font-bold flex items-center">Davomat</Link>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </Panel>

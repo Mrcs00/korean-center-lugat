@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarCheck, Check, Save } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Avatar, EmptyState, ErrorNote, Field, Input, Panel, Select, Spinner, Badge } from "@/components/platform/ui";
@@ -23,13 +24,29 @@ const TONE_ON: Record<string, string> = {
   blue: "bg-blue text-white border-blue",
 };
 
+// The page can be opened with ?group=<id>&date=YYYY-MM-DD (the "Davomat" button on
+// the dashboard does this), so the right lesson is already selected.
+// useSearchParams needs a Suspense boundary, so it lives here and the pages need no change.
+export function AttendanceView(props: { groups: GroupFull[]; fixedGroupId?: string }) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <AttendanceInner {...props} />
+    </Suspense>
+  );
+}
+
 // Mark who came to a lesson. Works for one group at a time.
-export function AttendanceView({ groups, fixedGroupId }: { groups: GroupFull[]; fixedGroupId?: string }) {
+function AttendanceInner({ groups, fixedGroupId }: { groups: GroupFull[]; fixedGroupId?: string }) {
   const { user } = useAuth();
   const toast = useToast();
+  const search = useSearchParams();
   const today = tashkentDateKey();
-  const [groupId, setGroupId] = useState(fixedGroupId ?? groups[0]?.id ?? "");
-  const [date, setDate] = useState(today);
+  const wantedGroup = search.get("group");
+  const wantedDate = search.get("date");
+  const [groupId, setGroupId] = useState(
+    fixedGroupId ?? (wantedGroup && groups.some((g) => g.id === wantedGroup) ? wantedGroup : groups[0]?.id ?? "")
+  );
+  const [date, setDate] = useState(wantedDate && /^\d{4}-\d{2}-\d{2}$/.test(wantedDate) ? wantedDate : today);
   const [marks, setMarks] = useState<Marks>({});
   const [topic, setTopic] = useState("");
   const [busy, setBusy] = useState(false);
