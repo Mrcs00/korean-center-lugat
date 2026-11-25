@@ -12,23 +12,26 @@ export function StaffProfileView() {
   if (!profile) return null;
   return (
     <Page>
-      <PageHeader title="Profil" />
+      <PageHeader title="Profil" subtitle="Shaxsiy ma'lumotlar va parol" />
       <div className="max-w-xl flex flex-col gap-6">
-        <Panel>
-          <div className="flex items-center gap-4">
-            <Avatar name={profile.full_name} size={64} />
-            <div>
-              <p className="text-xl font-extrabold">{profile.full_name}</p>
-              <p className="text-sm text-muted">{displayLogin(profile.username)}</p>
-              <div className="flex gap-2 mt-2">
-                <Badge tone="brand">{ROLE_LABEL[profile.role]}</Badge>
-                <Badge tone="gray">{formatDate(profile.created_at)} dan beri</Badge>
-              </div>
+        <div className="rounded-2xl bg-surface border border-border overflow-hidden shadow-[var(--shadow-xs)]">
+          <div className="h-20 bg-gradient-to-r from-brand to-brand-soft" />
+          <div className="px-5 pb-5 -mt-9">
+            <div className="rounded-full ring-4 ring-surface w-fit">
+              <Avatar name={profile.full_name} size={72} />
+            </div>
+            <p className="text-xl font-extrabold tracking-tight mt-3">{profile.full_name}</p>
+            <p className="text-sm text-muted">{displayLogin(profile.username)}</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Badge tone="brand">{ROLE_LABEL[profile.role]}</Badge>
+              <Badge tone="gray">{formatDate(profile.created_at)} dan beri</Badge>
             </div>
           </div>
-        </Panel>
+        </div>
         <PasswordCard />
       </div>
     </Page>
   );
 }
+
+void Panel;

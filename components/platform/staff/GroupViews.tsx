@@ -193,9 +193,9 @@ export function GroupDetailView({ role, group, allGroups, reloadGroups }: { role
           </>
         }
       />
-      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted mb-5">
-        <span className="flex items-center gap-1.5"><CalendarDays size={15} /> {group.lesson_days.map((d) => WEEKDAYS_FULL[d - 1]).join(", ") || "Kunlar belgilanmagan"} {timeRange(group.start_time, group.end_time)}</span>
-        <span className="flex items-center gap-1.5"><Users size={15} /> {group.memberCount} ta o&apos;quvchi</span>
+      <div className="flex flex-wrap gap-2 text-sm text-muted mb-5">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface border border-border px-3 py-1.5 shadow-[var(--shadow-xs)]"><CalendarDays size={15} /> {group.lesson_days.map((d) => WEEKDAYS_FULL[d - 1]).join(", ") || "Kunlar belgilanmagan"} {timeRange(group.start_time, group.end_time)}</span>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface border border-border px-3 py-1.5 shadow-[var(--shadow-xs)]"><Users size={15} /> {group.memberCount} ta o&apos;quvchi</span>
       </div>
 
       <Tabs<Tab>
@@ -283,7 +283,7 @@ function MembersTab({ role, group, onChanged }: { role: StaffRole; group: GroupF
           <div className="max-h-80 overflow-y-auto rounded-xl border border-border divide-y divide-border">
             {candidates.map((p) => (
               <label key={p.id} className="flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer">
-                <input type="checkbox" checked={chosen.includes(p.id)} onChange={(e) => setChosen((prev) => (e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)))} />
+                <input type="checkbox" className="h-4 w-4 rounded accent-[var(--brand-dark)] cursor-pointer" checked={chosen.includes(p.id)} onChange={(e) => setChosen((prev) => (e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)))} />
                 {p.full_name} <span className="text-muted text-xs">{displayLogin(p.username)}</span>
               </label>
             ))}
@@ -302,9 +302,9 @@ function GroupHomeworkTab({ role, group }: { role: StaffRole; group: GroupFull }
     <div className="flex flex-col gap-3">
       <div className="flex justify-end"><Button onClick={() => setForm(true)}><Plus size={16} /> Yangi vazifa</Button></div>
       {hw.loading ? <Spinner /> : (hw.data ?? []).length === 0 ? <EmptyState title="Vazifa yo'q" /> : (hw.data ?? []).map((h: Homework) => (
-        <Link key={h.id} href={`${base}/homework/${h.id}`} className="flex items-center gap-3 rounded-2xl bg-surface border border-border px-4 py-3.5 hover:border-border-strong">
+        <Link key={h.id} href={`${base}/homework/${h.id}`} className="flex items-center gap-3 rounded-2xl bg-surface border border-border px-4 py-3.5 shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-sm)] transition-all">
           <div className="min-w-0 flex-1"><p className="font-semibold text-sm truncate">{h.title}</p><p className="text-xs text-muted">{HOMEWORK_TYPES[h.type]} · {h.points} ball</p></div>
-          <span className="text-xs text-muted">{deadlineHint(h.due_at)}</span>
+          <span className="text-xs font-semibold text-muted rounded-full bg-black/[0.05] dark:bg-white/10 px-2.5 py-1 whitespace-nowrap">{deadlineHint(h.due_at)}</span>
         </Link>
       ))}
       <HomeworkFormModal open={form} groups={[group]} groupId={group.id} onClose={() => setForm(false)} onSaved={hw.reload} />
@@ -322,7 +322,7 @@ function GradesTab({ group }: { group: GroupFull }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
       <table className="w-full text-sm">
-        <thead><tr className="text-left text-xs text-muted border-b border-border bg-background/60"><th className="px-4 py-3 font-semibold">O&apos;quvchi</th>{homework.map((h) => <th key={h.id} className="px-3 py-3 font-semibold whitespace-nowrap max-w-[8rem] truncate" title={h.title}>{h.title}</th>)}<th className="px-4 py-3 font-semibold">O&apos;rtacha</th></tr></thead>
+        <thead><tr className="text-left text-[11px] uppercase tracking-wider text-muted border-b border-border bg-background/70"><th className="px-4 py-3 font-semibold">O&apos;quvchi</th>{homework.map((h) => <th key={h.id} className="px-3 py-3 font-semibold whitespace-nowrap max-w-[8rem] truncate" title={h.title}>{h.title}</th>)}<th className="px-4 py-3 font-semibold">O&apos;rtacha</th></tr></thead>
         <tbody>
           {(members.data ?? []).map((m) => {
             const mine = homework.map((h) => (subs.data ?? []).find((s) => s.homework_id === h.id && s.student_id === m.student_id));
@@ -378,7 +378,7 @@ function ScheduleTab({ group }: { group: GroupFull }) {
                 onBlur={() => saveTopic(d)}
                 disabled={cancelled}
                 placeholder="Dars mavzusi"
-                className="flex-1 basis-48 h-10 rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-brand-dark"
+                className="flex-1 basis-48 h-10 rounded-xl border border-border bg-surface px-3 text-sm outline-none transition-all hover:border-border-strong focus:border-brand-dark focus:ring-4 focus:ring-brand/25 disabled:opacity-50"
               />
               <button onClick={() => cancel(d, cancelled)} className="text-xs font-semibold text-muted hover:text-foreground">{cancelled ? "Qaytarish" : "Bekor qilish"}</button>
             </div>
@@ -418,8 +418,8 @@ function MaterialsTab({ group }: { group: GroupFull }) {
       {items.loading ? <Spinner /> : (items.data ?? []).length === 0 ? <EmptyState icon={FileText} title="Material yo'q" text="Havola yoki fayl qo'shing, o'quvchilar ko'radi." /> : (
         <div className="flex flex-col gap-2">
           {(items.data ?? []).map((m) => (
-            <div key={m.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-              {m.kind === "link" ? <LinkIcon size={18} className="text-muted" /> : <FileText size={18} className="text-muted" />}
+            <div key={m.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-[var(--shadow-xs)] hover:border-border-strong transition-colors">
+              <span className="h-9 w-9 rounded-lg bg-brand-soft text-brand-darker flex items-center justify-center shrink-0">{m.kind === "link" ? <LinkIcon size={17} /> : <FileText size={17} />}</span>
               <button className="flex-1 min-w-0 text-left text-sm font-semibold truncate" onClick={() => (m.kind === "link" && m.url ? window.open(m.url, "_blank", "noopener") : m.path ? openStoredFile(m.path) : undefined)}>{m.title}</button>
               <button aria-label="O'chirish" onClick={() => deleteMaterial(m.id).then(items.reload).catch((e: Error) => toast.error(e.message))} className="h-8 w-8 rounded-lg hover:bg-red-soft hover:text-red flex items-center justify-center text-muted"><Trash2 size={15} /></button>
             </div>

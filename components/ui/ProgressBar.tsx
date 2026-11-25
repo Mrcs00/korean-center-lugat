@@ -15,7 +15,7 @@ export function ProgressBar({
   return (
     <div className={`w-full ${className}`}>
       <div
-        className={`h-2 w-full rounded-full bg-black/[0.055] overflow-hidden ${trackClassName}`}
+        className={`h-2.5 w-full rounded-full bg-black/[0.06] dark:bg-white/10 overflow-hidden ${trackClassName}`}
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}

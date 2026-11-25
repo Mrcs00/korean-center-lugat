@@ -6,7 +6,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const shadowByElevation = {
-  sm: "shadow-[var(--shadow-sm)]",
+  sm: "shadow-[var(--shadow-xs)]",
   md: "shadow-[var(--shadow-md)]",
   lg: "shadow-[var(--shadow-lg)]",
 };

@@ -14,7 +14,7 @@ const TONE: Record<DayMark["tone"], string> = {
   amber: "bg-amber-soft text-amber",
   red: "bg-red-soft text-red",
   blue: "bg-blue-soft text-blue",
-  gray: "bg-black/[0.06] text-muted",
+  gray: "bg-black/[0.06] text-muted dark:bg-white/10",
 };
 
 // A month grid (Monday first). `marks` colours the days that have something.
@@ -37,14 +37,14 @@ export function MonthCalendar({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="font-bold">
+        <p className="font-extrabold tracking-tight">
           {MONTHS_UZ[m - 1]} {y}
         </p>
         <div className="flex gap-1.5">
-          <button onClick={() => onPeriodChange(shiftMonth(period, -1))} aria-label="Oldingi oy" className="h-9 w-9 rounded-lg border border-border flex items-center justify-center hover:bg-black/[0.04]">
+          <button onClick={() => onPeriodChange(shiftMonth(period, -1))} aria-label="Oldingi oy" className="h-9 w-9 rounded-xl border border-border bg-surface flex items-center justify-center hover:border-border-strong hover:bg-black/[0.03] transition-colors">
             <ChevronLeft size={16} />
           </button>
-          <button onClick={() => onPeriodChange(shiftMonth(period, 1))} aria-label="Keyingi oy" className="h-9 w-9 rounded-lg border border-border flex items-center justify-center hover:bg-black/[0.04]">
+          <button onClick={() => onPeriodChange(shiftMonth(period, 1))} aria-label="Keyingi oy" className="h-9 w-9 rounded-xl border border-border bg-surface flex items-center justify-center hover:border-border-strong hover:bg-black/[0.03] transition-colors">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -63,7 +63,7 @@ export function MonthCalendar({
             <div
               key={key}
               title={mark?.title}
-              className={`aspect-square rounded-xl flex items-center justify-center text-sm font-semibold ${mark ? TONE[mark.tone] : "text-muted"} ${key === today ? "ring-2 ring-brand-dark" : ""}`}
+              className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-transform hover:scale-105 ${mark ? TONE[mark.tone] : "text-muted hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"} ${key === today ? "ring-2 ring-brand-dark" : ""}`}
             >
               {day}
             </div>

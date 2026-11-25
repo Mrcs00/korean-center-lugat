@@ -334,7 +334,7 @@ function BranchForm({ open, branch, onClose, onSaved }: { open: boolean; branch:
         <Field label="Nomi"><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
         <Field label="Manzil"><Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
         <Field label="Telefon"><Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} inputMode="tel" /></Field>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Faol</label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="h-4 w-4 rounded accent-[var(--brand-dark)] cursor-pointer" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Faol</label>
       </div>
     </Modal>
   );
@@ -345,7 +345,7 @@ function Toggle<K extends keyof Settings>({ s, set, k, label, hint }: { s: Setti
   return (
     <label className="flex items-start justify-between gap-4 py-3 border-b border-border last:border-0 cursor-pointer">
       <span><span className="text-sm font-semibold block">{label}</span>{hint && <span className="text-xs text-muted">{hint}</span>}</span>
-      <input type="checkbox" className="mt-1 h-5 w-5" checked={Boolean(s[k])} onChange={(e) => set(k, e.target.checked as Settings[K])} />
+      <input type="checkbox" className="mt-1 h-5 w-5 rounded accent-[var(--brand-dark)] cursor-pointer" checked={Boolean(s[k])} onChange={(e) => set(k, e.target.checked as Settings[K])} />
     </label>
   );
 }

@@ -22,8 +22,10 @@ export function FileList({ files, onRemove }: { files: FileRef[]; onRemove?: (f:
   return (
     <ul className="flex flex-col gap-2">
       {files.map((f) => (
-        <li key={f.path} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5">
-          {isImage(f) ? <ImageIcon size={18} className="text-muted shrink-0" /> : <FileText size={18} className="text-muted shrink-0" />}
+        <li key={f.path} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 hover:border-border-strong transition-colors">
+          <span className="h-9 w-9 rounded-lg bg-brand-soft text-brand-darker flex items-center justify-center shrink-0">
+            {isImage(f) ? <ImageIcon size={17} /> : <FileText size={17} />}
+          </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold truncate">{f.name}</p>
             {f.size ? <p className="text-[11px] text-muted-soft">{fileSizeLabel(f.size)}</p> : null}
@@ -32,7 +34,7 @@ export function FileList({ files, onRemove }: { files: FileRef[]; onRemove?: (f:
             type="button"
             onClick={() => openStoredFile(f.path).catch((e: Error) => toast.error(e.message))}
             aria-label="Ochish"
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted hover:bg-black/[0.05]"
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted hover:bg-black/[0.05] dark:hover:bg-white/10"
           >
             <Download size={16} />
           </button>

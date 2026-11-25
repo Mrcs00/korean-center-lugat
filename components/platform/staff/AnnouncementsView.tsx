@@ -60,11 +60,14 @@ export function AnnouncementsPanel({ role, groups, fixedGroupId }: { role: Staff
       {list.loading ? <Spinner /> : rows.length === 0 ? <EmptyState icon={Megaphone} title="E'lon yo'q" /> : (
         <div className="flex flex-col gap-3">
           {rows.map((a) => (
-            <Panel key={a.id}>
+            <Panel key={a.id} className="border-l-4 border-l-brand-dark">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-bold">{a.title}</p>
+                <div className="flex items-start gap-3 min-w-0">
+                  <span className="h-10 w-10 rounded-xl bg-brand-soft text-brand-darker flex items-center justify-center shrink-0"><Megaphone size={18} /></span>
+                  <div className="min-w-0">
+                  <p className="font-extrabold tracking-tight">{a.title}</p>
                   <p className="text-xs text-muted mt-0.5">{formatDateTime(a.created_at)}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge tone="brand">{a.audience === "group" ? groups.find((g) => g.id === a.group_id)?.name ?? "Guruh" : AUDIENCE[a.audience]}</Badge>
@@ -73,7 +76,7 @@ export function AnnouncementsPanel({ role, groups, fixedGroupId }: { role: Staff
                   )}
                 </div>
               </div>
-              <p className="text-sm mt-3 whitespace-pre-line">{a.body}</p>
+              <p className="text-sm mt-3 whitespace-pre-line leading-relaxed">{a.body}</p>
               {a.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={a.image_url} alt="" className="mt-3 rounded-xl max-h-64 object-cover" />

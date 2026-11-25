@@ -36,8 +36,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((i) => (
           <div
             key={i.id}
-            className={`pointer-events-auto animate-rise flex items-start gap-2.5 max-w-sm w-full sm:w-auto rounded-2xl px-4 py-3 text-sm shadow-[var(--shadow-lg)] border ${
-              i.kind === "success" ? "bg-surface border-green/30" : "bg-surface border-red/40"
+            className={`pointer-events-auto animate-rise flex items-start gap-2.5 max-w-sm w-full sm:w-auto rounded-2xl px-4 py-3.5 text-sm font-medium shadow-[var(--shadow-lg)] border ${
+              i.kind === "success" ? "bg-surface border-green/30 border-l-4 border-l-green" : "bg-surface border-red/40 border-l-4 border-l-red"
             }`}
           >
             {i.kind === "success" ? (
@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <AlertCircle size={18} className="text-red shrink-0 mt-0.5" />
             )}
             <span className="flex-1">{i.text}</span>
-            <button onClick={() => setItems((prev) => prev.filter((x) => x.id !== i.id))} aria-label="Yopish" className="text-muted">
+            <button onClick={() => setItems((prev) => prev.filter((x) => x.id !== i.id))} aria-label="Yopish" className="text-muted hover:text-foreground transition-colors">
               <X size={14} />
             </button>
           </div>

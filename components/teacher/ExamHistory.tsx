@@ -80,18 +80,18 @@ export function ExamHistory({ attempts }: { attempts: ExamAttemptSummary[] }) {
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2 text-center mb-4">
-            <div className="rounded-xl bg-background py-2.5">
-              <p className="text-lg font-extrabold">{attempts.length}</p>
+            <div className="rounded-2xl bg-background border border-border py-3">
+              <p className="text-2xl font-extrabold tabular-nums">{attempts.length}</p>
               <p className="text-[11px] text-muted">topshirilgan</p>
             </div>
-            <div className="rounded-xl bg-background py-2.5">
-              <p className="text-lg font-extrabold" style={{ color: scoreColor(average) }}>
+            <div className="rounded-2xl bg-background border border-border py-3">
+              <p className="text-2xl font-extrabold tabular-nums" style={{ color: scoreColor(average) }}>
                 {average}%
               </p>
               <p className="text-[11px] text-muted">o&apos;rtacha</p>
             </div>
-            <div className="rounded-xl bg-background py-2.5">
-              <p className="text-lg font-extrabold" style={{ color: scoreColor(best) }}>
+            <div className="rounded-2xl bg-background border border-border py-3">
+              <p className="text-2xl font-extrabold tabular-nums" style={{ color: scoreColor(best) }}>
                 {best}%
               </p>
               <p className="text-[11px] text-muted">eng yaxshi</p>

@@ -68,7 +68,7 @@ export function NotificationBell() {
       >
         {unread > 0 ? <BellRing size={19} /> : <Bell size={19} />}
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-surface">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -77,7 +77,7 @@ export function NotificationBell() {
       {open && (
         <div className="fixed sm:absolute inset-x-3 sm:inset-x-auto top-16 sm:top-12 sm:right-0 sm:w-[22rem] z-50 rounded-2xl bg-surface border border-border shadow-[var(--shadow-lg)] overflow-hidden animate-rise">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <p className="font-bold text-sm">Bildirishnomalar</p>
+            <p className="font-extrabold text-sm">Bildirishnomalar{unread > 0 && <span className="ml-2 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-[#0f1d33]">{unread}</span>}</p>
             {unread > 0 && (
               <button onClick={readAll} className="text-xs font-semibold text-brand-darker flex items-center gap-1">
                 <CheckCheck size={14} /> Hammasini o&apos;qildi

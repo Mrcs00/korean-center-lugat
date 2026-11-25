@@ -10,7 +10,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       onClick={toggleTheme}
       aria-label={theme === "dark" ? "Kunduzgi rejimga o'tish" : "Tungi rejimga o'tish"}
-      className={`relative h-9 w-9 rounded-xl flex items-center justify-center bg-black/[0.04] hover:bg-black/[0.07] transition-colors active:scale-90 ${className}`}
+      className={`relative h-10 w-10 rounded-xl flex items-center justify-center bg-black/[0.05] hover:bg-black/[0.09] dark:bg-white/10 dark:hover:bg-white/15 transition-colors active:scale-90 ${className}`}
     >
       <Sun
         size={17}

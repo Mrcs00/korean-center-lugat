@@ -157,6 +157,7 @@ export function HomeworkFormModal({
                 <label key={m.student_id} className="flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer">
                   <input
                     type="checkbox"
+                    className="h-4 w-4 rounded accent-[var(--brand-dark)] cursor-pointer"
                     checked={chosen.includes(m.student_id)}
                     onChange={(e) => setChosen((prev) => (e.target.checked ? [...prev, m.student_id] : prev.filter((x) => x !== m.student_id)))}
                   />

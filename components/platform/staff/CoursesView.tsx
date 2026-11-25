@@ -30,10 +30,10 @@ export function CoursesView() {
           {(courses.data ?? []).map((c) => {
             const used = (groups.data ?? []).filter((g) => g.course_id === c.id);
             return (
-              <Link key={c.id} href={`/admin/courses/${c.id}`} className="rounded-2xl bg-surface border border-border overflow-hidden hover:border-border-strong hover:shadow-[var(--shadow-md)] transition-all">
-                <div className="h-20 bg-brand-soft relative">{c.image_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={c.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />}</div>
+              <Link key={c.id} href={`/admin/courses/${c.id}`} className="group rounded-2xl bg-surface border border-border overflow-hidden shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200">
+                <div className="h-24 bg-gradient-to-br from-brand to-brand-soft relative">{c.image_url && /* eslint-disable-next-line @next/next/no-img-element */ <img src={c.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />}</div>
                 <div className="p-5">
-                  <div className="flex items-start justify-between gap-2"><p className="font-extrabold text-lg">{c.name}</p><Badge tone={c.active ? "green" : "gray"}>{c.active ? "Faol" : "Nofaol"}</Badge></div>
+                  <div className="flex items-start justify-between gap-2"><p className="font-extrabold text-lg tracking-tight">{c.name}</p><Badge tone={c.active ? "green" : "gray"}>{c.active ? "Faol" : "Nofaol"}</Badge></div>
                   <p className="text-xs text-muted mt-1 line-clamp-2">{c.description || "Tavsif yo'q"}</p>
                   <p className="text-xs text-muted mt-3">{used.length} ta guruh · {c.monthly_price ? `${formatMoney(c.monthly_price)} / oy` : "narx belgilanmagan"}</p>
                 </div>
@@ -84,7 +84,7 @@ export function CourseFormModal({ open, course, onClose, onSaved }: { open: bool
         <Field label="Oylik narx (so'm)"><Input inputMode="numeric" value={f.monthly_price} onChange={(e) => set("monthly_price", e.target.value)} /></Field>
         <Field label="Lug'at kitobi" hint="O'quvchilar shu kitob lug'atlarini kursda ko'radi."><Select value={f.vocab_book} onChange={(e) => set("vocab_book", e.target.value)}><option value="">Yo&apos;q</option>{BOOKS.map((b) => <option key={b} value={b}>서울대 한국어 {b.toUpperCase()}</option>)}</Select></Field>
         <Field label="Rasm havolasi"><Input value={f.image_url} onChange={(e) => set("image_url", e.target.value)} placeholder="https://..." /></Field>
-        <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={f.active} onChange={(e) => set("active", e.target.checked)} /> Kurs faol</label>
+        <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" className="h-4 w-4 rounded accent-[var(--brand-dark)] cursor-pointer" checked={f.active} onChange={(e) => set("active", e.target.checked)} /> Kurs faol</label>
         {problem && <p className="sm:col-span-2 text-xs text-red">{problem}</p>}
       </div>
     </Modal>
