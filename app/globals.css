@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* `dark:` utilities follow the app's own theme switch (the .dark class on <html>),
+   not the computer's setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @font-face {
   font-family: "Pretendard Variable";
   font-weight: 45 920;
@@ -101,6 +105,23 @@
   --font-stack-kr: "Pretendard Variable", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", var(--font-stack-display);
 }
 
+/* In the base layer, so any utility class (outline-none, cursor-default...) still wins. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--brand-dark);
+    outline-offset: 2px;
+  }
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -143,6 +164,18 @@ body {
 .bg-grain {
   background-image: radial-gradient(rgba(26, 26, 23, 0.03) 0.6px, transparent 0.6px);
   background-size: 14px 14px;
+}
+
+/* Loading placeholder block */
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--border-strong) 37%, var(--border) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 0.75rem;
+}
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
 }
 
 @keyframes fade-up {

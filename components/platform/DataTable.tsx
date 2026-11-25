@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { EmptyState, Pagination, SearchInput } from "./ui";
 
 export interface Column<T> {
@@ -87,18 +88,19 @@ export function DataTable<T>({
       ) : (
         <>
           {/* desktop table */}
-          <div className="hidden md:block overflow-x-auto rounded-2xl border border-border bg-surface">
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-border bg-surface shadow-[var(--shadow-xs)]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-muted border-b border-border bg-background/60">
+                <tr className="text-left text-[11px] uppercase tracking-wider text-muted border-b border-border bg-background/70">
                   {columns.map((c) => (
-                    <th key={c.key} className={`px-4 py-3 font-semibold whitespace-nowrap ${c.className ?? ""}`}>
+                    <th key={c.key} className={`px-4 py-3.5 font-bold whitespace-nowrap ${c.className ?? ""}`}>
                       {c.sortValue ? (
                         <button
                           onClick={() => setSort((s) => (s?.key === c.key ? { key: c.key, dir: s.dir === 1 ? -1 : 1 } : { key: c.key, dir: 1 }))}
-                          className="hover:text-foreground"
+                          className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-foreground"
                         >
-                          {c.header} {sort?.key === c.key ? (sort.dir === 1 ? "↑" : "↓") : ""}
+                          {c.header}
+                          {sort?.key === c.key && (sort.dir === 1 ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
                         </button>
                       ) : (
                         c.header
@@ -112,10 +114,10 @@ export function DataTable<T>({
                   <tr
                     key={rowKey(row)}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={`border-b border-border last:border-0 ${onRowClick ? "cursor-pointer hover:bg-black/[0.025] dark:hover:bg-white/[0.04]" : ""}`}
+                    className={`border-b border-border last:border-0 transition-colors ${onRowClick ? "cursor-pointer hover:bg-brand-tint dark:hover:bg-white/[0.04]" : ""}`}
                   >
                     {columns.map((c) => (
-                      <td key={c.key} className={`px-4 py-3 align-middle ${c.className ?? ""}`}>
+                      <td key={c.key} className={`px-4 py-3.5 align-middle ${c.className ?? ""}`}>
                         {c.render(row)}
                       </td>
                     ))}
@@ -131,7 +133,7 @@ export function DataTable<T>({
               <div
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={`rounded-2xl border border-border bg-surface p-4 flex flex-col gap-2 ${onRowClick ? "active:bg-black/[0.03]" : ""}`}
+                className={`rounded-2xl border border-border bg-surface p-4 flex flex-col gap-2 shadow-[var(--shadow-xs)] ${onRowClick ? "active:bg-brand-tint" : ""}`}
               >
                 {columns
                   .filter((c) => !c.hideOnMobile)
@@ -151,7 +153,7 @@ export function DataTable<T>({
             ))}
           </div>
 
-          <Pagination page={current} pageCount={pageCount} onChange={setPage} />
+          <Pagination page={current} pageCount={pageCount} onChange={setPage} total={filtered.length} pageSize={pageSize} />
         </>
       )}
     </div>
