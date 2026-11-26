@@ -52,7 +52,7 @@ export function PageHeader({
 
 /** Standard page width + padding for every panel page. */
 export function Page({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
-  return <div className={`animate-fade-up mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-8 lg:pb-12 ${wide ? "max-w-7xl" : "max-w-6xl"}`}>{children}</div>;
+  return <div className={`animate-page mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-8 lg:pb-12 ${wide ? "max-w-7xl" : "max-w-6xl"}`}>{children}</div>;
 }
 
 // ── Stat card ───────────────────────────────────────────────────────────────
