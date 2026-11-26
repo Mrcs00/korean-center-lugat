@@ -31,8 +31,8 @@ export default function StudentCoursesPage() {
               const learned = words.filter((w) => (progress[w.id]?.masteryLevel ?? 0) >= 3).length;
               const pct = words.length ? Math.round((learned / words.length) * 100) : null;
               return (
-                <Link key={g.id} href={`/student/courses/${g.id}`} className="rounded-2xl bg-surface border border-border overflow-hidden hover:border-border-strong hover:shadow-[var(--shadow-md)] transition-all">
-                  <div className="h-24 bg-brand-soft relative">
+                <Link key={g.id} href={`/student/courses/${g.id}`} className="group rounded-2xl bg-surface border border-border overflow-hidden shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200">
+                  <div className="h-28 bg-gradient-to-br from-brand to-brand-dark relative">
                     {g.course?.image_url && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={g.course.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -42,7 +42,7 @@ export default function StudentCoursesPage() {
                     </div>
                   </div>
                   <div className="p-5">
-                    <p className="font-extrabold text-lg leading-tight">{g.course?.name ?? g.name}</p>
+                    <p className="font-extrabold text-lg leading-tight tracking-tight">{g.course?.name ?? g.name}</p>
                     <p className="text-sm text-muted">{g.name}</p>
                     <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted">
                       {g.teacher && (

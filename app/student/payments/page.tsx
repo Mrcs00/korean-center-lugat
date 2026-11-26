@@ -1,6 +1,6 @@
 "use client";
 
-import { Wallet } from "lucide-react";
+import { AlertCircle, BadgeCheck, CalendarClock, Wallet } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge, EmptyState, ErrorNote, Page, PageHeader, Panel, Spinner, StatCard } from "@/components/platform/ui";
 import { useSettings } from "@/lib/platform/settings";
@@ -42,9 +42,9 @@ export default function StudentPaymentsPage() {
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <StatCard icon={Wallet} label="Holat" value={status === "paid" ? "To'langan" : status === "debt" ? "Qarzdor" : "Kutilmoqda"} tone={status === "paid" ? "green" : status === "debt" ? "red" : "amber"} />
-              <StatCard icon={Wallet} label="Jami to'langan" value={formatMoney(totalPaid)} tone="green" />
-              <StatCard icon={Wallet} label="Qarzdorlik" value={formatMoney(debt)} tone={debt > 0 ? "red" : "gray"} />
-              <StatCard icon={Wallet} label="Keyingi to'lov sanasi" value={nextDue ? formatDate(nextDue) : "—"} tone="blue" />
+              <StatCard icon={BadgeCheck} label="Jami to'langan" value={formatMoney(totalPaid)} tone="green" />
+              <StatCard icon={AlertCircle} label="Qarzdorlik" value={formatMoney(debt)} tone={debt > 0 ? "red" : "gray"} />
+              <StatCard icon={CalendarClock} label="Keyingi to'lov sanasi" value={nextDue ? formatDate(nextDue) : "—"} tone="blue" />
             </div>
 
             {billings.map(({ g, b }) => (
@@ -79,7 +79,7 @@ export default function StudentPaymentsPage() {
                         {PAYMENT_METHODS[p.method]} · {formatPeriod(p.period)}
                         {p.note ? ` · ${p.note}` : ""}
                       </span>
-                      <span className="font-bold text-sm">{formatMoney(p.amount)}</span>
+                      <span className="font-extrabold text-sm tabular-nums">{formatMoney(p.amount)}</span>
                       <Badge tone={p.status === "paid" ? "green" : "amber"}>{p.status === "paid" ? "To'langan" : "Kutilmoqda"}</Badge>
                     </div>
                   ))}

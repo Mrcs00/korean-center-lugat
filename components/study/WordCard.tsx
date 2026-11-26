@@ -30,7 +30,7 @@ export function WordCard({
   };
 
   return (
-    <Card elevation="md" className="p-8 text-center">
+    <Card elevation="md" className="p-8 sm:p-10 text-center">
       {(word.partOfSpeech || word.topic) && (
         <span className="inline-block text-[11px] font-bold text-brand-darker bg-brand-soft px-2.5 py-1 rounded-full mb-5">
           {[word.partOfSpeech && POS_LABEL[word.partOfSpeech], word.topic].filter(Boolean).join(" · ")}
@@ -42,7 +42,7 @@ export function WordCard({
         <button
           onClick={speak}
           aria-label="Talaffuzni eshitish"
-          className="h-9 w-9 rounded-full bg-brand-soft flex items-center justify-center hover:bg-brand transition-colors active:scale-90"
+          className="h-10 w-10 rounded-full bg-brand-soft flex items-center justify-center hover:bg-brand transition-colors active:scale-90 shadow-[var(--shadow-xs)]"
         >
           <Volume2 size={16} className="text-brand-darker" />
         </button>
@@ -52,7 +52,7 @@ export function WordCard({
       <p className={`text-xl font-bold ${word.exampleSentenceKo ? "mb-6" : "mb-2"}`}>{word.uzbekTranslation}</p>
 
       {word.exampleSentenceKo && (
-        <div className="bg-black/[0.025] border border-border rounded-2xl p-4 text-left mb-4">
+        <div className="bg-black/[0.025] dark:bg-white/[0.04] border border-border rounded-2xl p-4 text-left mb-4">
           <p className="font-kr text-sm mb-1.5">{word.exampleSentenceKo}</p>
           {word.exampleSentenceUz && <p className="text-sm text-muted">{word.exampleSentenceUz}</p>}
         </div>
@@ -78,27 +78,27 @@ export function WordCard({
           <div className="flex items-center justify-center gap-2 mt-6">
             <button
               onClick={() => onRate("unknown")}
-              className="flex-1 h-12 rounded-2xl bg-red-soft text-red font-semibold text-sm hover:brightness-95 transition-all active:scale-95"
+              className="flex-1 h-12 rounded-2xl bg-red-soft text-red font-bold text-sm border border-red/15 hover:brightness-95 hover:-translate-y-px transition-all active:scale-95"
             >
               🔴 Bilmayman
             </button>
             <button
               onClick={() => onRate("partial")}
-              className="flex-1 h-12 rounded-2xl bg-amber-soft text-amber font-semibold text-sm hover:brightness-95 transition-all active:scale-95"
+              className="flex-1 h-12 rounded-2xl bg-amber-soft text-amber font-bold text-sm border border-amber/15 hover:brightness-95 hover:-translate-y-px transition-all active:scale-95"
             >
               🟡 Qisman esladim
             </button>
             <button
               onClick={() => onRate("known")}
-              className="flex-1 h-12 rounded-2xl bg-green-soft text-green font-semibold text-sm hover:brightness-95 transition-all active:scale-95"
+              className="flex-1 h-12 rounded-2xl bg-green-soft text-green font-bold text-sm border border-green/15 hover:brightness-95 hover:-translate-y-px transition-all active:scale-95"
             >
               🟢 Esladim
             </button>
           </div>
           <p className="text-center text-[11px] text-muted-soft mt-3">
-            Klaviatura: <kbd className="px-1.5 py-0.5 rounded bg-black/5 font-mono">1</kbd>{" "}
-            <kbd className="px-1.5 py-0.5 rounded bg-black/5 font-mono">2</kbd>{" "}
-            <kbd className="px-1.5 py-0.5 rounded bg-black/5 font-mono">3</kbd>
+            Klaviatura: <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">1</kbd>{" "}
+            <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">2</kbd>{" "}
+            <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">3</kbd>
           </p>
         </>
       )}

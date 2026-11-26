@@ -9,6 +9,7 @@ import { Badge, EmptyState, ErrorNote, Field, Page, PageHeader, Panel, Spinner, 
 import { FileList, FileUploader } from "@/components/platform/FileUploader";
 import { useToast } from "@/components/platform/Toast";
 import { Button } from "@/components/ui/Button";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getHomework, q, saveSubmission } from "@/lib/platform/api";
 import { supabase } from "@/lib/supabase/client";
@@ -103,7 +104,7 @@ export default function StudentHomeworkDetail() {
 
             <Panel title="Mening javobim">
               {s?.status === "needs_revision" && (
-                <div className="mb-4 rounded-xl bg-red-soft text-red text-sm px-4 py-3">
+                <div className="mb-4 rounded-xl bg-red-soft text-red text-sm font-medium px-4 py-3 border border-red/20">
                   Ustoz vazifani qayta ishlashni so&apos;radi. Izohni o&apos;qib, javobni to&apos;g&apos;rilang va qayta topshiring.
                 </div>
               )}
@@ -137,10 +138,11 @@ export default function StudentHomeworkDetail() {
             <Panel title="Natija">
               {s?.status === "graded" ? (
                 <div>
-                  <p className="text-4xl font-extrabold">
+                  <p className="text-5xl font-extrabold tabular-nums tracking-tight text-green">
                     {s.score ?? "—"}
                     <span className="text-base text-muted font-semibold"> / {h.points}</span>
                   </p>
+                  <ProgressBar value={Number(s.score ?? 0)} max={h.points} className="mt-4" />
                   {s.feedback && (
                     <div className="mt-4">
                       <p className="text-xs font-semibold text-muted mb-1">Ustoz izohi</p>

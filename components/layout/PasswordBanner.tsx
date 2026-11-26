@@ -24,12 +24,12 @@ export function PasswordBanner() {
   if (!show) return null;
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-amber-soft px-4 py-3 mb-6">
-      <KeyRound size={18} className="text-amber shrink-0" />
+    <div className="flex items-center gap-3 rounded-2xl bg-amber-soft border border-amber/25 px-4 py-3 mb-6">
+      <span className="h-9 w-9 rounded-xl bg-amber/15 flex items-center justify-center shrink-0"><KeyRound size={17} className="text-amber" /></span>
       <p className="text-sm flex-1">
         {"O'qituvchi bergan parolni o'zingiz o'ylab topgan parolga almashtiring, shunda akkauntingiz faqat sizniki bo'ladi."}
       </p>
-      <Link href="/profile#parol" className="text-sm font-bold text-brand-dark whitespace-nowrap">
+      <Link href="/profile#parol" className="text-sm font-extrabold text-amber whitespace-nowrap hover:underline">
         {"O'zgartirish →"}
       </Link>
     </div>

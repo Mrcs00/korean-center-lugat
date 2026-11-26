@@ -23,8 +23,8 @@ export default function ReviewPage() {
   if (!started) {
     return (
       <AppShell>
-        <div className="max-w-lg mx-auto px-5 py-16 text-center">
-          <div className="h-16 w-16 rounded-3xl bg-brand-soft flex items-center justify-center mx-auto mb-5 text-3xl">
+        <div className="animate-page max-w-lg mx-auto px-5 py-16 text-center">
+          <div className="h-20 w-20 rounded-3xl bg-brand shadow-[var(--shadow-brand)] flex items-center justify-center mx-auto mb-6 text-4xl">
             🔄
           </div>
           {dueWords.length > 0 ? (
@@ -62,7 +62,7 @@ export default function ReviewPage() {
   if (!word) {
     return (
       <AppShell>
-        <div className="max-w-lg mx-auto px-5 py-16 text-center">
+        <div className="animate-page max-w-lg mx-auto px-5 py-16 text-center">
           <h1 className="text-2xl font-extrabold tracking-tight mb-2">🎉 Ajoyib ish!</h1>
           <p className="text-sm text-muted mb-8">Barcha takrorlash yakunlandi.</p>
           <Link href="/dashboard">

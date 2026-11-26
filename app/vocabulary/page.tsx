@@ -24,8 +24,8 @@ export default function VocabularyPage() {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto px-5 md:px-8 py-8">
-        <h1 className="text-2xl font-extrabold tracking-tight mb-1">Lug'atlar</h1>
+      <div className="animate-page max-w-4xl mx-auto px-5 md:px-8 py-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1">Lug'atlar</h1>
         <p className="text-sm text-muted mb-6">Kategoriyani tanlang va o'rganishni boshlang.</p>
 
         <div className="relative mb-6">
@@ -34,7 +34,7 @@ export default function VocabularyPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="So'z qidirish..."
-            className="w-full h-12 pl-11 pr-4 rounded-2xl border border-border bg-surface text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+            className="w-full h-12 pl-11 pr-4 rounded-2xl border border-border bg-surface text-sm outline-none transition-all hover:border-border-strong focus:border-brand-dark focus:ring-4 focus:ring-brand/25"
           />
         </div>
 
@@ -63,8 +63,8 @@ export default function VocabularyPage() {
             <Link href="/vocabulary/past-exams">
               <Card interactive className="p-5 h-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-2xl bg-brand-soft flex items-center justify-center shrink-0">
-                    <History size={20} className="text-brand-darker" />
+                  <div className="h-12 w-12 rounded-2xl bg-brand shadow-[var(--shadow-brand)] flex items-center justify-center shrink-0">
+                    <History size={22} className="text-[#0f1d33]" />
                   </div>
                   <div>
                     <p className="font-bold">O'tgan TOPIK imtihonidagi lug'atlar</p>
@@ -78,8 +78,8 @@ export default function VocabularyPage() {
             <Link href="/vocabulary/seoul-hangugo">
               <Card interactive className="p-5 h-full flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-2xl bg-brand-soft flex items-center justify-center shrink-0">
-                    <GraduationCap size={20} className="text-brand-darker" />
+                  <div className="h-12 w-12 rounded-2xl bg-brand shadow-[var(--shadow-brand)] flex items-center justify-center shrink-0">
+                    <GraduationCap size={22} className="text-[#0f1d33]" />
                   </div>
                   <div>
                     <p className="font-bold">서울대 한국어 lug'atlari</p>

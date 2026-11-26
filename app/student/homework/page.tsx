@@ -15,6 +15,16 @@ import { deadlineHint, formatDateTime } from "@/lib/platform/format";
 
 type Filter = "all" | "todo" | "new" | "submitted" | "graded" | "overdue";
 
+// a coloured edge on each card shows the state at a glance
+const EDGE: Record<string, string> = {
+  green: "border-l-green",
+  amber: "border-l-amber",
+  red: "border-l-red",
+  blue: "border-l-blue",
+  gray: "border-l-border-strong",
+  brand: "border-l-brand-dark",
+};
+
 export default function StudentHomeworkPage() {
   const { user } = useAuth();
   const { groups, loading: gl } = useMyGroups();
@@ -71,10 +81,10 @@ export default function StudentHomeworkPage() {
                 {visible.map(({ h, sub, status }) => {
                   const group = groups.find((g) => g.id === h.group_id);
                   return (
-                    <Link key={h.id} href={`/student/homework/${h.id}`} className="rounded-2xl bg-surface border border-border p-4 sm:p-5 hover:border-border-strong hover:shadow-[var(--shadow-sm)] transition-all">
+                    <Link key={h.id} href={`/student/homework/${h.id}`} className={`rounded-2xl bg-surface border border-border border-l-4 ${EDGE[SUBMISSION[status].tone] ?? ""} p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-bold">{h.title}</p>
+                          <p className="font-extrabold tracking-tight">{h.title}</p>
                           <p className="text-xs text-muted mt-0.5">{group?.course?.name ?? group?.name} · {HOMEWORK_TYPES[h.type]}</p>
                         </div>
                         <Badge tone={SUBMISSION[status].tone}>{SUBMISSION[status].label}</Badge>
@@ -93,7 +103,7 @@ export default function StudentHomeworkPage() {
 
             {(vocab.data ?? []).length > 0 && (
               <div className="mt-10">
-                <h2 className="font-bold text-lg mb-3">Lug&apos;at topshiriqlari</h2>
+                <h2 className="font-extrabold text-lg tracking-tight mb-3 flex items-center gap-2">Lug&apos;at topshiriqlari <span className="rounded-full bg-brand px-2 py-0.5 text-[11px] font-bold text-[#0f1d33]">{(vocab.data ?? []).length}</span></h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   {(vocab.data ?? []).map((a) => (
                     <VocabAssignmentCard key={a.id} a={a} />

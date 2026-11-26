@@ -1,8 +1,8 @@
 "use client";
 
-import { MapPin, MessageCircle, Phone, User } from "lucide-react";
+import { MapPin, MessageCircle, Phone } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { Page, PageHeader, Panel } from "@/components/platform/ui";
+import { Avatar, Page, PageHeader, Panel } from "@/components/platform/ui";
 import { useSettings } from "@/lib/platform/settings";
 import { useMyGroups } from "@/lib/platform/hooks";
 
@@ -26,7 +26,7 @@ export default function StudentContactPage() {
           <Panel title={settings.platform_name}>
             <div className="flex flex-col gap-4">
               {rows.map((r) => (
-                <div key={r.label} className="flex items-start gap-3">
+                <div key={r.label} className="flex items-start gap-3 rounded-2xl border border-border bg-background/50 p-3.5 hover:border-border-strong transition-colors">
                   <div className="h-10 w-10 rounded-xl bg-brand-soft text-brand-darker flex items-center justify-center shrink-0">
                     <r.icon size={18} />
                   </div>
@@ -55,9 +55,7 @@ export default function StudentContactPage() {
               <div className="flex flex-col gap-3">
                 {teachers.map((t) => (
                   <div key={t} className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-black/[0.05] flex items-center justify-center">
-                      <User size={18} className="text-muted" />
-                    </div>
+                    <Avatar name={t} size={40} />
                     <p className="font-semibold text-sm">{t}</p>
                   </div>
                 ))}

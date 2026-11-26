@@ -109,7 +109,7 @@ export default function StudentCourseDetail() {
                   const l = savedBy.get(d);
                   const st = attBy.get(d);
                   return (
-                    <div key={d} className="flex items-center gap-3 py-3 border-b border-border last:border-0">
+                    <div key={d} className="flex items-center gap-3 py-3 border-b border-border last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] -mx-2 px-2 rounded-lg transition-colors">
                       <div className="w-24 shrink-0 text-sm font-bold">{formatDate(d)}</div>
                       <div className="min-w-0 flex-1 text-sm text-muted truncate">{l?.topic ?? (d > today ? "Mavzu hali belgilanmagan" : "—")}</div>
                       {st ? <Badge tone={ATTENDANCE[st].tone}>{ATTENDANCE[st].label}</Badge> : d > today ? <Badge tone="gray">Rejada</Badge> : null}
@@ -127,7 +127,7 @@ export default function StudentCourseDetail() {
             {homework.map((h) => {
               const st = studentHomeworkStatus(h, subOf.get(h.id));
               return (
-                <Link key={h.id} href={`/student/homework/${h.id}`} className="flex items-center gap-3 rounded-2xl bg-surface border border-border px-4 py-3.5 hover:border-border-strong">
+                <Link key={h.id} href={`/student/homework/${h.id}`} className="flex items-center gap-3 rounded-2xl bg-surface border border-border px-4 py-3.5 shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-sm)] transition-all">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-sm truncate">{h.title}</p>
                     <p className="text-xs text-muted mt-0.5">{deadlineHint(h.due_at)}</p>
@@ -151,7 +151,7 @@ export default function StudentCourseDetail() {
                     onClick={() => (m.kind === "link" && m.url ? window.open(m.url, "_blank", "noopener") : m.path ? openStoredFile(m.path) : undefined)}
                     className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 text-left hover:border-border-strong"
                   >
-                    {m.kind === "link" ? <LinkIcon size={18} className="text-muted" /> : <FileText size={18} className="text-muted" />}
+                    <span className="h-9 w-9 rounded-lg bg-brand-soft text-brand-darker flex items-center justify-center shrink-0">{m.kind === "link" ? <LinkIcon size={17} /> : <FileText size={17} />}</span>
                     <span className="flex-1 min-w-0 text-sm font-semibold truncate">{m.title}</span>
                   </button>
                 ))}
@@ -163,9 +163,9 @@ export default function StudentCourseDetail() {
         {tab === "vocab" && (
           <div className="flex flex-col gap-4">
             {group.course?.vocab_book && (
-              <Link href={`/vocabulary/seoul-hangugo/${group.course.vocab_book}`} className="rounded-2xl bg-brand-soft px-5 py-4 font-semibold flex items-center justify-between">
+              <Link href={`/vocabulary/seoul-hangugo/${group.course.vocab_book}`} className="rounded-2xl bg-gradient-to-r from-brand to-brand-dark text-[#0f1d33] px-5 py-4 font-bold flex items-center justify-between shadow-[var(--shadow-brand)] hover:-translate-y-0.5 transition-all">
                 <span>{group.course.name} kitobi lug&apos;atlari</span>
-                <span className="text-brand-darker">Ochish →</span>
+                <span>Ochish →</span>
               </Link>
             )}
             {(vocab.data ?? []).length === 0 ? (
@@ -186,9 +186,9 @@ export default function StudentCourseDetail() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="font-semibold">{value}</dd>
+    <div className="rounded-xl bg-background border border-border px-3.5 py-2.5">
+      <dt className="text-[11px] font-semibold text-muted">{label}</dt>
+      <dd className="font-bold mt-0.5">{value}</dd>
     </div>
   );
 }

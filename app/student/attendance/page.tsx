@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Clock, ListChecks, XCircle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge, EmptyState, ErrorNote, Page, PageHeader, Panel, Spinner, StatCard } from "@/components/platform/ui";
 import { MonthCalendar, type DayMark } from "@/components/platform/MonthCalendar";
@@ -41,10 +41,10 @@ export default function StudentAttendancePage() {
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
               <StatCard icon={CalendarCheck} label="Davomat" value={`${rate}%`} tone="brand" />
-              <StatCard icon={CalendarCheck} label="Jami dars" value={rows.length} tone="blue" />
-              <StatCard icon={CalendarCheck} label="Qatnashgan" value={count("present")} tone="green" />
-              <StatCard icon={CalendarCheck} label="Kechikkan" value={count("late")} tone="amber" />
-              <StatCard icon={CalendarCheck} label="Kelmagan" value={count("absent")} tone="red" />
+              <StatCard icon={ListChecks} label="Jami dars" value={rows.length} tone="blue" />
+              <StatCard icon={CheckCircle2} label="Qatnashgan" value={count("present")} tone="green" />
+              <StatCard icon={Clock} label="Kechikkan" value={count("late")} tone="amber" />
+              <StatCard icon={XCircle} label="Kelmagan" value={count("absent")} tone="red" />
             </div>
 
             <div className="grid lg:grid-cols-5 gap-6">
@@ -60,7 +60,7 @@ export default function StudentAttendancePage() {
               <Panel title="Tarix" className="lg:col-span-3">
                 <div className="flex flex-col">
                   {history.slice(0, 40).map((r) => (
-                    <div key={r.id} className="flex items-center gap-3 py-3 border-b border-border last:border-0">
+                    <div key={r.id} className="flex items-center gap-3 py-3 border-b border-border last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.03] -mx-2 px-2 rounded-lg transition-colors">
                       <span className="w-24 shrink-0 text-sm font-bold">{formatDate(r.lesson?.lesson_date)}</span>
                       <span className="flex-1 min-w-0 text-sm text-muted truncate">
                         {groups.find((g) => g.id === r.lesson?.group_id)?.name ?? ""}

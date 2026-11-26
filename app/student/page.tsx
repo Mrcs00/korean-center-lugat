@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BookOpen, CalendarCheck, CalendarDays, ClipboardList, Clock, Flame, Languages, Megaphone, Repeat, Wallet } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PasswordBanner } from "@/components/layout/PasswordBanner";
-import { Badge, EmptyState, ErrorNote, Page, PageHeader, Panel, Spinner, StatCard, useLoad } from "@/components/platform/ui";
+import { Badge, EmptyState, ErrorNote, Page, Panel, Spinner, StatCard, useLoad } from "@/components/platform/ui";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useSettings } from "@/lib/platform/settings";
@@ -61,15 +61,26 @@ export default function StudentHome() {
     <AppShell>
       <Page>
         <PasswordBanner />
-        <PageHeader
-          title={`Xush kelibsiz, ${(profile?.full_name ?? "").split(" ")[0]} 👋`}
-          subtitle={formatDate(today)}
-          actions={
-            <span className="flex items-center gap-1.5 bg-brand-soft px-3.5 py-2 rounded-2xl text-sm font-bold">
-              <Flame size={16} className="text-amber" /> {store.profile.streak} kun
+        {/* hero: the text on the yellow is always navy */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand to-brand-dark p-6 sm:p-8 mb-6 shadow-[var(--shadow-md)] text-[#0f1d33]">
+          <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/25" />
+          <div className="absolute right-16 -bottom-14 h-36 w-36 rounded-full bg-white/15" />
+          <div className="relative flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] opacity-70">{formatDate(today)}</p>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1">Xush kelibsiz, {(profile?.full_name ?? "").split(" ")[0]} 👋</h1>
+              {!loading && (
+                <p className="text-sm font-semibold opacity-80 mt-1.5">
+                  {todo.length > 0 ? `${todo.length} ta vazifa sizni kutmoqda` : "Hamma vazifa bajarilgan"}
+                  {todays.length > 0 ? ` · bugun ${todays.length} ta dars bor` : ""}
+                </p>
+              )}
+            </div>
+            <span className="flex items-center gap-1.5 bg-white/70 px-4 py-2.5 rounded-2xl text-sm font-extrabold shadow-[var(--shadow-xs)]">
+              <Flame size={17} className="text-amber" /> {store.profile.streak} kun
             </span>
-          }
-        />
+          </div>
+        </div>
 
         {error && <ErrorNote message={error} />}
         {loading ? (
@@ -114,7 +125,7 @@ export default function StudentHome() {
                   ) : (
                     <div className="flex flex-col gap-2.5">
                       {todo.slice(0, 4).map(({ h, status }) => (
-                        <Link key={h.id} href={`/student/homework/${h.id}`} className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 hover:border-border-strong transition-colors">
+                        <Link key={h.id} href={`/student/homework/${h.id}`} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-sm)] transition-all">
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-sm truncate">{h.title}</p>
                             <p className="text-xs text-muted flex items-center gap-1 mt-0.5">
@@ -139,7 +150,7 @@ export default function StudentHome() {
                         const learned = words.filter((w) => (store.progress[w.id]?.masteryLevel ?? 0) >= 3).length;
                         const pct = words.length ? Math.round((learned / words.length) * 100) : null;
                         return (
-                          <Link key={gr.id} href={`/student/courses/${gr.id}`} className="rounded-2xl border border-border p-4 hover:border-border-strong hover:shadow-[var(--shadow-sm)] transition-all">
+                          <Link key={gr.id} href={`/student/courses/${gr.id}`} className="rounded-2xl border border-border bg-surface p-4 shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5 transition-all duration-200">
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="font-bold truncate">{gr.course?.name ?? gr.name}</p>
@@ -167,12 +178,12 @@ export default function StudentHome() {
               <div className="flex flex-col gap-6">
                 <Panel title="Lug'at mashqi">
                   <div className="flex flex-col gap-2">
-                    <Link href="/review" className="flex items-center gap-3 rounded-xl bg-brand-soft px-4 py-3 font-semibold text-sm">
-                      <Repeat size={18} className="text-brand-darker" />
+                    <Link href="/review" className="flex items-center gap-3 rounded-xl bg-brand text-[#0f1d33] px-4 py-3.5 font-bold text-sm shadow-[var(--shadow-brand)] hover:bg-brand-dark transition-colors">
+                      <Repeat size={18} />
                       <span className="flex-1">Takrorlash</span>
-                      <span className="text-xs font-bold">{dueWords} ta</span>
+                      <span className="rounded-full bg-white/60 px-2.5 py-0.5 text-xs font-extrabold">{dueWords} ta</span>
                     </Link>
-                    <Link href="/vocabulary" className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 font-semibold text-sm hover:border-border-strong">
+                    <Link href="/vocabulary" className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3.5 font-semibold text-sm hover:border-border-strong transition-colors">
                       <Languages size={18} className="text-muted" /> Lug&apos;atlar
                     </Link>
                   </div>
@@ -184,7 +195,7 @@ export default function StudentHome() {
                   ) : (
                     <div className="flex flex-col gap-3">
                       {(ann.data ?? []).map((a) => (
-                        <div key={a.id} className="border-b border-border last:border-0 pb-3 last:pb-0">
+                        <div key={a.id} className="rounded-xl bg-brand-tint border border-brand/20 px-3.5 py-3">
                           <p className="text-sm font-bold flex items-center gap-1.5">
                             <Megaphone size={14} className="text-brand-darker shrink-0" /> {a.title}
                           </p>

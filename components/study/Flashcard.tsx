@@ -27,7 +27,7 @@ export function Flashcard({ word }: { word: VocabularyWord }) {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Front */}
-        <div className="absolute inset-0 [backface-visibility:hidden] bg-surface border border-border rounded-3xl shadow-[0_8px_24px_-12px_rgba(23,23,15,0.12)] flex flex-col items-center justify-center gap-3 px-6">
+        <div className="absolute inset-0 [backface-visibility:hidden] bg-surface border border-border rounded-3xl shadow-[var(--shadow-md)] flex flex-col items-center justify-center gap-3 px-6">
           <h2 className="font-kr text-4xl font-bold">{word.koreanWord}</h2>
           {word.pronunciation && <p className="text-sm text-muted">[{word.pronunciation}]</p>}
           <button
@@ -37,7 +37,7 @@ export function Flashcard({ word }: { word: VocabularyWord }) {
           >
             <Volume2 size={18} className="text-brand-dark" />
           </button>
-          <p className="text-xs text-muted absolute bottom-5">Bosib ko'ring</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-soft absolute bottom-5">Bosib ko'ring</p>
         </div>
 
         {/* Back */}

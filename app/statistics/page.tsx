@@ -42,8 +42,8 @@ export default function StatisticsPage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto px-5 md:px-8 py-8">
-        <h1 className="text-2xl font-extrabold tracking-tight mb-6">Statistika</h1>
+      <div className="animate-page max-w-3xl mx-auto px-5 md:px-8 py-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-6">Statistika</h1>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <StatCard label="Umumiy so'zlar" value={VOCAB_WORDS.length} />
@@ -60,7 +60,7 @@ export default function StatisticsPage() {
             {last7Days.map((d) => (
               <div key={d.key} className="flex-1 flex flex-col items-center gap-1.5">
                 <div
-                  className="w-full rounded-lg bg-brand"
+                  className="w-full rounded-lg bg-gradient-to-t from-brand-dark to-brand shadow-[var(--shadow-xs)]"
                   style={{ height: `${Math.max(4, (d.count / maxDay) * 96)}px` }}
                 />
                 <span className="text-[10px] text-muted">
@@ -76,7 +76,7 @@ export default function StatisticsPage() {
             Sizning hozirgi darajangiz
           </p>
           <div className="flex items-end justify-between mb-3">
-            <span className="text-3xl font-extrabold tracking-tight">
+            <span className="text-4xl font-extrabold tracking-tight">
               {levelEstimate.level !== null ? `TOPIK ${levelEstimate.level}` : "—"}
             </span>
             <span className="text-xs text-muted-soft">
@@ -126,8 +126,8 @@ export default function StatisticsPage() {
 function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
     <Card className="p-4">
-      <p className={`text-2xl font-extrabold ${accent ? "text-brand-dark" : ""}`}>{value}</p>
-      <p className="text-[11px] text-muted mt-0.5">{label}</p>
+      <p className={`text-3xl font-extrabold tabular-nums tracking-tight ${accent ? "text-brand-darker" : ""}`}>{value}</p>
+      <p className="text-xs font-semibold text-muted mt-1">{label}</p>
     </Card>
   );
 }

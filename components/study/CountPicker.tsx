@@ -83,12 +83,12 @@ export function CountPicker({
   }
 
   const chip = (active: boolean) =>
-    `px-3.5 py-2 rounded-xl border-2 text-sm font-semibold transition-colors ${
-      active ? "border-brand bg-brand-soft" : "border-border bg-background hover:border-border-strong"
+    `px-3.5 py-2 rounded-xl border-2 text-sm font-bold transition-all ${
+      active ? "border-brand-dark bg-brand-soft shadow-[var(--shadow-xs)]" : "border-border bg-background hover:border-border-strong"
     }`;
 
   const inputCls =
-    "w-full h-11 px-3 rounded-xl border border-border bg-background text-center text-base font-semibold outline-none focus:border-brand focus:ring-2 focus:ring-brand/30";
+    "w-full h-11 px-3 rounded-xl border border-border bg-background text-center text-base font-semibold outline-none transition-all hover:border-border-strong focus:border-brand-dark focus:ring-4 focus:ring-brand/25";
 
   return (
     <div className="text-left">
