@@ -21,7 +21,7 @@ export default function ExamResultPage() {
       <AppShell>
         <div className="max-w-lg mx-auto px-5 py-16 text-center">
           <p className="text-muted">Natija topilmadi.</p>
-          <Link href="/exam" className="text-sm font-semibold text-brand-dark mt-2 inline-block">
+          <Link href="/exam" className="text-sm font-extrabold text-brand-darker mt-2 inline-block hover:underline">
             Imtihonlarga qaytish
           </Link>
         </div>
@@ -40,7 +40,7 @@ export default function ExamResultPage() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-5 py-10">
+      <div className="animate-page max-w-lg mx-auto px-5 py-10">
         <Card elevation="md" className="p-8 text-center mb-6">
           <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">
             {examSetTitle(attempt.setId)} Vocabulary Exam
@@ -53,21 +53,21 @@ export default function ExamResultPage() {
             <CircularScore percent={percent} />
           </div>
 
-          <p className="text-lg font-semibold mb-6">
+          <p className="text-xl font-extrabold tracking-tight mb-6">
             {emoji} {label}
           </p>
 
           <div className="grid grid-cols-3 gap-3 text-center mb-6">
-            <div>
-              <p className="text-xl font-bold text-green">✓ {attempt.correctCount}</p>
+            <div className="rounded-2xl bg-green-soft py-3">
+              <p className="text-xl font-extrabold tabular-nums text-green">✓ {attempt.correctCount}</p>
               <p className="text-[11px] text-muted">To'g'ri</p>
             </div>
-            <div>
-              <p className="text-xl font-bold text-red">× {attempt.wrongCount}</p>
+            <div className="rounded-2xl bg-red-soft py-3">
+              <p className="text-xl font-extrabold tabular-nums text-red">× {attempt.wrongCount}</p>
               <p className="text-[11px] text-muted">Xato</p>
             </div>
-            <div>
-              <p className="text-xl font-bold text-muted">○ {attempt.skippedCount}</p>
+            <div className="rounded-2xl bg-black/[0.05] dark:bg-white/10 py-3">
+              <p className="text-xl font-extrabold tabular-nums text-muted">○ {attempt.skippedCount}</p>
               <p className="text-[11px] text-muted">O'tkazib yuborilgan</p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function ExamResultPage() {
             </p>
             <div className="flex flex-col gap-2">
               {wrongWords.map((w) => (
-                <Card key={w!.id} className="p-4 flex items-center justify-between">
+                <Card key={w!.id} className="p-4 flex items-center justify-between border-l-4 border-l-red">
                   <span className="font-kr font-semibold">{w!.koreanWord}</span>
                   <span className="text-sm text-muted">{w!.uzbekTranslation}</span>
                 </Card>

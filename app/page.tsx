@@ -28,10 +28,12 @@ export default function LandingPage() {
   }, [loading, user, profile, router]);
 
   return (
-    <div className="min-h-screen bg-page">
-      <header className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+    <div className="relative min-h-screen bg-page overflow-hidden">
+      <div className="pointer-events-none absolute -top-40 -right-32 h-[28rem] w-[28rem] rounded-full bg-brand/25 blur-3xl" />
+      <div className="pointer-events-none absolute top-[28rem] -left-40 h-80 w-80 rounded-full bg-brand/15 blur-3xl" />
+      <header className="relative max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-brand flex items-center justify-center font-extrabold text-lg text-[#0f1d33]">K</div>
+          <div className="h-11 w-11 rounded-2xl bg-brand flex items-center justify-center font-extrabold text-xl text-[#0f1d33] shadow-[var(--shadow-brand)]">K</div>
           <span className="font-extrabold text-lg tracking-tight">{settings.platform_name}</span>
         </div>
         <div className="flex items-center gap-3">
@@ -42,10 +44,10 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 pt-12 pb-20">
+      <main className="animate-page relative max-w-6xl mx-auto px-6 pt-12 pb-20">
         <div className="max-w-2xl">
-          <p className="inline-block rounded-full bg-brand-soft text-brand-darker text-xs font-bold px-3 py-1 mb-5">O&apos;quv markazi platformasi</p>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]">
+          <p className="inline-block rounded-full bg-brand-soft text-brand-darker border border-brand/30 text-xs font-bold px-3.5 py-1.5 mb-6">O&apos;quv markazi platformasi</p>
+          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08]">
             Koreys tilini o&apos;rganish,<br />
             <span className="bg-brand px-2 rounded-lg text-[#0f1d33]">bir joyda.</span>
           </h1>
@@ -59,11 +61,11 @@ export default function LandingPage() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-16">
           {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-2xl bg-surface border border-border p-5">
-              <div className="h-10 w-10 rounded-xl bg-brand-soft text-brand-darker flex items-center justify-center mb-3">
+            <div key={f.title} className="group rounded-2xl bg-surface border border-border p-6 shadow-[var(--shadow-xs)] hover:border-border-strong hover:shadow-[var(--shadow-md)] hover:-translate-y-1 transition-all duration-200">
+              <div className="h-12 w-12 rounded-2xl bg-brand text-[#0f1d33] flex items-center justify-center mb-4 shadow-[var(--shadow-brand)]">
                 <f.icon size={20} />
               </div>
-              <p className="font-bold">{f.title}</p>
+              <p className="font-extrabold tracking-tight">{f.title}</p>
               <p className="text-sm text-muted mt-1">{f.text}</p>
             </div>
           ))}

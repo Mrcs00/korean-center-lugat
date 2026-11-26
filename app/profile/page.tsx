@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Flame, Trophy, BookOpen, Target, LogOut, Trash2, Minus, Plus } from "lucide-react";
+import { Flame, Trophy, BookOpen, Target, LogOut, Trash2, Minus, Plus, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -43,15 +43,18 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-5 md:px-8 py-8">
-        <Card className="p-6 text-center mb-6">
-          <div className="h-20 w-20 rounded-full bg-brand-soft flex items-center justify-center text-2xl font-extrabold mx-auto mb-3">
-            {profile.fullName.charAt(0)}
-          </div>
-          <h1 className="text-xl font-extrabold tracking-tight">{profile.fullName}</h1>
-          <p className="text-sm text-muted">{login}</p>
-          <div className="inline-flex items-center gap-1.5 bg-black/[0.04] px-3 py-1 rounded-full mt-3 text-xs font-semibold">
-            Daraja {profile.level} · {profile.xp} XP
+      <div className="animate-page max-w-lg mx-auto px-5 md:px-8 py-8">
+        <Card className="overflow-hidden text-center mb-6">
+          <div className="h-24 bg-gradient-to-r from-brand to-brand-dark" />
+          <div className="px-6 pb-6 -mt-10">
+            <div className="h-20 w-20 rounded-full bg-brand-soft text-brand-darker ring-4 ring-surface flex items-center justify-center text-2xl font-extrabold mx-auto mb-3">
+              {profile.fullName.charAt(0)}
+            </div>
+            <h1 className="text-xl font-extrabold tracking-tight">{profile.fullName}</h1>
+            <p className="text-sm text-muted">{login}</p>
+            <div className="inline-flex items-center gap-1.5 bg-brand-soft text-brand-darker px-3.5 py-1.5 rounded-full mt-3 text-xs font-bold">
+              Daraja {profile.level} · {profile.xp} XP
+            </div>
           </div>
         </Card>
 
@@ -84,7 +87,7 @@ export default function ProfilePage() {
                 onClick={() => setDailyGoal(dailyGoal - 5)}
                 disabled={dailyGoal <= 5}
                 aria-label="Kamaytirish"
-                className="h-9 w-9 rounded-xl bg-black/[0.04] hover:bg-black/[0.07] flex items-center justify-center transition-colors disabled:opacity-30 disabled:pointer-events-none active:scale-90"
+                className="h-9 w-9 rounded-xl bg-black/[0.05] hover:bg-black/[0.09] dark:bg-white/10 dark:hover:bg-white/15 flex items-center justify-center transition-colors disabled:opacity-30 disabled:pointer-events-none active:scale-90"
               >
                 <Minus size={15} />
               </button>
@@ -93,7 +96,7 @@ export default function ProfilePage() {
                 onClick={() => setDailyGoal(dailyGoal + 5)}
                 disabled={dailyGoal >= 200}
                 aria-label="Oshirish"
-                className="h-9 w-9 rounded-xl bg-black/[0.04] hover:bg-black/[0.07] flex items-center justify-center transition-colors disabled:opacity-30 disabled:pointer-events-none active:scale-90"
+                className="h-9 w-9 rounded-xl bg-black/[0.05] hover:bg-black/[0.09] dark:bg-white/10 dark:hover:bg-white/15 flex items-center justify-center transition-colors disabled:opacity-30 disabled:pointer-events-none active:scale-90"
               >
                 <Plus size={15} />
               </button>
@@ -140,11 +143,11 @@ function StatTile({
   return (
     <Card className="p-4 flex items-center gap-3">
       <div className="h-10 w-10 rounded-2xl bg-brand-soft flex items-center justify-center shrink-0">
-        <Icon size={18} className="text-brand-dark" />
+        <Icon size={18} className="text-brand-darker" />
       </div>
       <div>
-        <p className="font-bold">{value}</p>
-        <p className="text-[11px] text-muted">{label}</p>
+        <p className="text-lg font-extrabold tabular-nums leading-tight">{value}</p>
+        <p className="text-[11px] font-semibold text-muted">{label}</p>
       </div>
     </Card>
   );
@@ -154,10 +157,10 @@ function ProfileRow({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between px-4 py-3.5 rounded-2xl hover:bg-black/[0.03] transition-colors text-sm font-medium"
+      className="flex items-center justify-between px-4 py-3.5 rounded-2xl hover:bg-black/[0.03] dark:hover:bg-white/[0.05] transition-colors text-sm font-semibold"
     >
       {label}
-      <span className="text-muted">›</span>
+      <ChevronRight size={16} className="text-muted" />
     </Link>
   );
 }
