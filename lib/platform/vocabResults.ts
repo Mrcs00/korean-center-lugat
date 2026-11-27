@@ -4,8 +4,7 @@ import { fetchAssignmentsForGroup, type RealAssignment } from "../services/assig
 import { setWordsInOrder } from "../utils/examSets";
 
 // Teacher-side results of a vocabulary assignment. Read-only: it only reads
-// exam_attempts and vocabulary_progress, which a teacher may already read for
-// their own students (kc_attempts_staff / kc_progress_staff).
+// exam_attempts, which a teacher may already read for their own students (kc_attempts_staff).
 
 type Page<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
 
@@ -21,19 +20,13 @@ async function allRows<T>(make: (from: number, to: number) => Page<T>): Promise<
   return out;
 }
 
-const chunk = <T,>(arr: T[], size: number): T[][] => {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-};
-
 export type ResultStatus = "none" | "progress" | "done";
 
 export interface StudentResult {
   studentId: string;
   name: string;
   status: ResultStatus;
-  pct: number; // set: % of words mastered; book exam: best score
+  pct: number; // best exam score of the student on this assignment
   attempts: number; // finished exam attempts on this set
   bestExamPct: number | null;
   lastAt: string | null;
@@ -65,34 +58,23 @@ export async function loadVocabResults(a: RealAssignment): Promise<VocabResults>
       .range(f, t)
   );
 
-  // word mastery (only for set assignments; same rule as the student card: level >= 3)
-  const mastered = new Map<string, number>();
-  let wordCount = 0;
+  // How many questions an exam must have to count for this assignment: a set assignment
+  // needs an exam over at least its words (a longer exam covers it too); a book exam has no minimum.
+  let needed = 0;
   if (!isBookExam) {
     const all = setWordsInOrder(a.setId);
-    const words = a.wordFrom && a.wordTo ? all.slice(a.wordFrom - 1, a.wordTo) : all;
-    wordCount = words.length;
-    const wordIds = words.map((w) => w.id);
-    type Prog = { student_id: string; word_id: string; mastery_level: number };
-    const parts = await Promise.all(
-      chunk(wordIds, 100).map((part) =>
-        allRows<Prog>((f, t) =>
-          supabase.from("vocabulary_progress").select("student_id, word_id, mastery_level").in("student_id", ids).in("word_id", part).range(f, t)
-        )
-      )
-    );
-    for (const row of parts.flat()) {
-      if (row.mastery_level >= 3) mastered.set(row.student_id, (mastered.get(row.student_id) ?? 0) + 1);
-    }
+    needed = a.wordFrom && a.wordTo ? a.wordTo - a.wordFrom + 1 : all.length;
   }
 
+  // The score is the student's best exam result (the student takes the test, the system scores it).
+  // Flashcard "I know it" marks do not count.
   const rows: StudentResult[] = members.map((m) => {
-    const mine = attempts.filter((x) => x.student_id === m.student_id);
+    const mine = attempts.filter((x) => x.student_id === m.student_id && x.total_questions >= needed);
     const best = mine.length ? Math.max(...mine.map((x) => Math.round((x.correct_count / Math.max(x.total_questions, 1)) * 100))) : null;
     const last = mine.map((x) => x.submitted_at ?? "").sort().pop() || null;
-    const pct = isBookExam ? best ?? 0 : wordCount ? Math.round(((mastered.get(m.student_id) ?? 0) / wordCount) * 100) : 0;
-    const done = pct >= a.minimumMastery && (!isBookExam || mine.length > 0);
-    const status: ResultStatus = done ? "done" : pct > 0 || mine.length > 0 ? "progress" : "none";
+    const pct = best ?? 0;
+    const done = mine.length > 0 && pct >= a.minimumMastery;
+    const status: ResultStatus = done ? "done" : mine.length > 0 ? "progress" : "none";
     return { studentId: m.student_id, name: m.profile?.full_name ?? "O'quvchi", status, pct, attempts: mine.length, bestExamPct: best, lastAt: last };
   });
 

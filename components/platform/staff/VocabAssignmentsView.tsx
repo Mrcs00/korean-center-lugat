@@ -234,7 +234,7 @@ export function VocabAssignmentsView({ groups }: { groups: GroupFull[] }) {
                   </div>
                   <div className="flex items-center justify-between mt-3">
                     <p className="text-[11px] text-muted-soft">
-                      {isBookExam ? "O'tish bali" : "Talab qilingan mastery"}: {a.minimumMastery}%
+                      O&apos;tish bali: {a.minimumMastery}%
                     </p>
                     <button
                       onClick={() => setOpenId(open ? null : a.id)}
@@ -380,7 +380,7 @@ export function VocabAssignmentsView({ groups }: { groups: GroupFull[] }) {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-muted">
-                      {kind === "book_exam" ? "O'tish bali %" : "Min. mastery %"}
+                      O'tish bali %
                     </label>
                     <input
                       type="number"

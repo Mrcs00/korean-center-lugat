@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { BookOpenCheck, Clock, GraduationCap, Table, Target } from "lucide-react";
 import type { RealAssignment } from "@/lib/services/assignmentService";
-import { examSetTitle, rangeLabel, rangeProgressPercent } from "@/lib/utils/examSets";
+import { examSetTitle, rangeLabel, setWordsInOrder } from "@/lib/utils/examSets";
 import { useStore } from "@/lib/store/progressStore";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Badge } from "./ui";
@@ -13,14 +13,16 @@ const actionCls =
 
 // A vocabulary assignment sent to the group (set practice or a book exam).
 export function VocabAssignmentCard({ a }: { a: RealAssignment }) {
-  const { progress, examAttempts } = useStore();
+  const { examAttempts } = useStore();
   const isBookExam = a.kind === "book_exam" && Boolean(a.bookId);
   const hasRange = Boolean(a.wordFrom && a.wordTo);
 
-  const attempts = examAttempts.filter((x) => x.setId === a.setId);
+  // Only exams that cover the assigned words count (a longer exam covers them too).
+  const needed = isBookExam ? 0 : hasRange ? a.wordTo! - a.wordFrom! + 1 : setWordsInOrder(a.setId).length;
+  const attempts = examAttempts.filter((x) => x.setId === a.setId && x.totalQuestions >= needed);
   const bestScore = attempts.reduce((best, x) => Math.max(best, Math.round((x.correctCount / Math.max(x.totalQuestions, 1)) * 100)), 0);
-  const pct = isBookExam ? bestScore : rangeProgressPercent(a.setId, a.wordFrom, a.wordTo, progress);
-  const met = pct >= a.minimumMastery && (!isBookExam || attempts.length > 0);
+  const pct = bestScore; // best exam score: the test is the only thing that counts
+  const met = attempts.length > 0 && pct >= a.minimumMastery;
 
   return (
     <div className="rounded-2xl bg-surface border border-border p-5">
@@ -40,12 +42,12 @@ export function VocabAssignmentCard({ a }: { a: RealAssignment }) {
           <Clock size={12} /> Muddat: {a.deadline ?? "Muddatsiz"}
         </span>
         <span className={`font-bold ${met ? "text-green" : "text-brand-darker"}`}>
-          {isBookExam && attempts.length === 0 ? "Topshirilmagan" : `${pct}%`} {met && "✓"}
+          {attempts.length === 0 ? "Topshirilmagan" : `${pct}%`} {met && "✓"}
         </span>
       </div>
       <ProgressBar value={pct} max={100} />
       <p className="text-[11px] text-muted-soft mt-2">
-        {isBookExam ? "O'tish bali" : "Talab qilingan"}: {a.minimumMastery}%{met ? " — bajarildi!" : ""}
+        O'tish bali: {a.minimumMastery}%{met ? " — bajarildi!" : ""}
       </p>
 
       <div className={`mt-4 ${isBookExam ? "flex gap-2" : "grid grid-cols-2 gap-2"}`}>

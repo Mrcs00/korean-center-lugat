@@ -27,7 +27,7 @@ export function VocabAssignmentRow({ a, groupName }: { a: RealAssignment; groupN
             <span>{groupName}</span>
             <span>{detail}</span>
             <span className="flex items-center gap-1"><Clock size={12} /> {a.deadline ? formatDate(a.deadline) : "Muddatsiz"}</span>
-            <span>{isBookExam ? "O'tish bali" : "Talab"}: {a.minimumMastery}%</span>
+            <span>O&apos;tish bali: {a.minimumMastery}%</span>
           </p>
         </div>
         <Badge tone="gray">Avtomatik ball</Badge>
