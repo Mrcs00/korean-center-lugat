@@ -222,9 +222,8 @@ function ExamRunnerContent() {
         isCorrect: r.isCorrect,
         studentAnswer: r.studentAnswer,
       }));
-    results
-      .filter((r) => r.studentAnswer !== "")
-      .forEach((r) => reviewWord(r.wordId, r.isCorrect ? "correct" : "wrong"));
+    // A skipped question counts as not known: it goes to the review queue like a wrong answer.
+    results.forEach((r) => reviewWord(r.wordId, r.isCorrect ? "correct" : "wrong"));
     recordExamAttempt(attempt, answers);
     router.push(`/result/${attempt.id}`);
   };

@@ -15,7 +15,7 @@ import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
 export default function VocabularySetPage() {
   const params = useParams<{ setId: string }>();
   const router = useRouter();
-  const { progress, reviewWord } = useStore();
+  const { progress } = useStore();
   const [index, setIndex] = useState(0);
   const [mode, setMode] = useState<"list" | "learn">("list");
 
@@ -51,14 +51,15 @@ export default function VocabularySetPage() {
 
   if (mode === "learn") {
     const word = words[index];
-    const handleRate = (rating: "unknown" | "partial" | "known") => {
-      reviewWord(word.id, rating);
+    // Just looking at the words: it does not change progress (only tests do).
+    const goNext = () => {
       if (index < words.length - 1) {
         setIndex(index + 1);
       } else {
         router.push(`/vocabulary/${set.id}`);
       }
     };
+    const goPrev = () => setIndex((i) => Math.max(0, i - 1));
 
     return (
       <AppShell>
@@ -72,7 +73,7 @@ export default function VocabularySetPage() {
             </span>
           </div>
           <ProgressBar value={index + 1} max={words.length} className="mb-6" />
-          <WordCard word={word} onRate={handleRate} />
+          <WordCard word={word} onPrev={goPrev} onNext={goNext} isFirst={index === 0} isLast={index === words.length - 1} />
         </div>
       </AppShell>
     );

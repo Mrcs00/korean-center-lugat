@@ -17,9 +17,11 @@ export function isoDatePlusDays(days: number): string {
 }
 
 /**
- * Applies a self-rating (flashcard) or quiz/exam result to a word's
- * progress record and returns the next state. Wrong answers drop mastery
- * and shorten the next interval ("Xato qilinsa tezroq qaytarilsin").
+ * Applies a quiz / exam / review result to a word's progress record and returns the next state.
+ *  - correct: the word is learned (level 3). A learned word answered correctly again climbs to level 4.
+ *  - wrong (or skipped): the word is not learned any more (level 0) and is due for review right away,
+ *    so it shows up in "Takrorlash".
+ * Flashcards no longer change progress at all; only tests do.
  */
 export function applyReview(
   current: VocabularyProgress,
@@ -33,14 +35,14 @@ export function applyReview(
   const isNeutral = outcome === "partial";
 
   if (isPositive) {
-    next = Math.min(4, current.masteryLevel + 1) as MasteryLevel;
+    next = (current.masteryLevel < 3 ? 3 : 4) as MasteryLevel;
     correctCount += 1;
   } else if (isNeutral) {
     // stays at same level, but doesn't reset progress
     next = current.masteryLevel;
   } else {
-    // "Bilmayman" / wrong: drop back, review sooner
-    next = Math.max(0, current.masteryLevel - 1) as MasteryLevel;
+    // wrong / skipped: back to "new", due now -> goes to the review queue
+    next = 0;
     wrongCount += 1;
   }
 

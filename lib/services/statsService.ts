@@ -144,7 +144,7 @@ export function estimateTopikLevel(progress: Record<string, VocabularyProgress>)
 
 export function wrongWordIds(progress: Record<string, VocabularyProgress>): string[] {
   return Object.values(progress)
-    .filter((p) => p.wrongCount > 0)
+    .filter((p) => p.wrongCount > 0 && p.masteryLevel < 3) // fixed once answered correctly again
     .sort((a, b) => b.wrongCount - a.wrongCount)
     .map((p) => p.wordId);
 }

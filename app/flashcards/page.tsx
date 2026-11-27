@@ -1,23 +1,22 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Flashcard } from "@/components/study/Flashcard";
-import { useStore } from "@/lib/store/progressStore";
-import { useMemoryShortcuts } from "@/lib/hooks/useMemoryShortcuts";
 import { VOCAB_SETS, VOCAB_WORDS } from "@/lib/data/seed";
-import { SelfRating } from "@/lib/types";
 import { parseRange, rangeLabel } from "@/lib/utils/examSets";
 
+// Flashcards are only for looking at the words: they do not change the student's progress.
+// A word counts as learned only when it is answered correctly in a test or exam.
 function FlashcardsContent() {
   const params = useSearchParams();
   const router = useRouter();
   const setId = params.get("set") ?? VOCAB_SETS[0]?.id;
-  const { reviewWord } = useStore();
   const [index, setIndex] = useState(0);
 
   const set = VOCAB_SETS.find((s) => s.id === setId);
@@ -30,21 +29,27 @@ function FlashcardsContent() {
     return { words: r ? all.slice(r.from - 1, r.to) : all, range: r };
   }, [setId, fromParam, toParam]);
   const word = words[index];
+  const isFirst = index === 0;
+  const isLast = index >= words.length - 1;
 
-  const handleRate = useCallback(
-    (rating: SelfRating) => {
-      if (!word || !set) return;
-      reviewWord(word.id, rating);
-      if (index < words.length - 1) {
-        setIndex((i) => i + 1);
-      } else {
-        router.push(`/vocabulary/${set.id}`);
-      }
-    },
-    [word, set, index, words.length, reviewWord, router]
-  );
+  const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
+  const next = useCallback(() => {
+    if (!set) return;
+    if (index < words.length - 1) setIndex((i) => i + 1);
+    else router.push(`/vocabulary/${set.id}`);
+  }, [set, index, words.length, router]);
 
-  useMemoryShortcuts(handleRate, Boolean(word));
+  // ← and → keys
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "ArrowLeft") prev();
+      else if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prev, next]);
 
   if (!set || words.length === 0) {
     return (
@@ -72,30 +77,17 @@ function FlashcardsContent() {
 
       <Flashcard key={word.id} word={word} />
 
-      <div className="flex items-center justify-center gap-2 mt-6">
-        <button
-          onClick={() => handleRate("unknown")}
-          className="flex-1 h-12 rounded-2xl bg-red-soft text-red font-semibold text-sm hover:brightness-95 transition-all active:scale-95"
-        >
-          🔴 Bilmayman
-        </button>
-        <button
-          onClick={() => handleRate("partial")}
-          className="flex-1 h-12 rounded-2xl bg-amber-soft text-amber font-semibold text-sm hover:brightness-95 transition-all active:scale-95"
-        >
-          🟡 Qisman esladim
-        </button>
-        <button
-          onClick={() => handleRate("known")}
-          className="flex-1 h-12 rounded-2xl bg-green-soft text-green font-semibold text-sm hover:brightness-95 transition-all active:scale-95"
-        >
-          🟢 Esladim
-        </button>
+      <div className="flex items-center gap-2 mt-6">
+        <Button variant="secondary" size="lg" className="flex-1" disabled={isFirst} onClick={prev}>
+          <ChevronLeft size={18} /> Oldingi
+        </Button>
+        <Button size="lg" className="flex-1" onClick={next}>
+          {isLast ? "Tugatish" : "Keyingi"} <ChevronRight size={18} />
+        </Button>
       </div>
       <p className="text-center text-[11px] text-muted-soft mt-3">
-        Klaviatura: <kbd className="px-1.5 py-0.5 rounded bg-black/5 font-mono">1</kbd> Bilmayman ·{" "}
-        <kbd className="px-1.5 py-0.5 rounded bg-black/5 font-mono">2</kbd> Qisman ·{" "}
-        <kbd className="px-1.5 py-0.5 rounded bg-black/5 font-mono">3</kbd> Esladim
+        Klaviatura: <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">←</kbd> oldingi ·{" "}
+        <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">→</kbd> keyingi
       </p>
     </div>
   );

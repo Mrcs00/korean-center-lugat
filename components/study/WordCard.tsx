@@ -1,9 +1,10 @@
 "use client";
 
-import { Volume2 } from "lucide-react";
-import { VocabularyWord, SelfRating } from "@/lib/types";
+import { useEffect } from "react";
+import { ChevronLeft, ChevronRight, Volume2 } from "lucide-react";
+import { VocabularyWord } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
-import { useMemoryShortcuts } from "@/lib/hooks/useMemoryShortcuts";
+import { Button } from "@/components/ui/Button";
 
 const POS_LABEL: Record<string, string> = {
   noun: "ot",
@@ -13,14 +14,32 @@ const POS_LABEL: Record<string, string> = {
   expression: "ibora",
 };
 
+// Just shows a word. With onPrev / onNext it also shows "Oldingi" / "Keyingi" (and the ← → keys work).
+// Looking at a word never changes the student's progress; only tests do.
 export function WordCard({
   word,
-  onRate,
+  onPrev,
+  onNext,
+  isFirst = false,
+  isLast = false,
 }: {
   word: VocabularyWord;
-  onRate?: (rating: SelfRating) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }) {
-  useMemoryShortcuts(onRate ?? (() => {}), Boolean(onRate));
+  useEffect(() => {
+    if (!onPrev && !onNext) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "ArrowLeft" && onPrev && !isFirst) onPrev();
+      else if (e.key === "ArrowRight" && onNext) onNext();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onPrev, onNext, isFirst]);
 
   const speak = () => {
     if (typeof window === "undefined") return;
@@ -73,34 +92,15 @@ export function WordCard({
         </div>
       )}
 
-      {onRate && (
-        <>
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <button
-              onClick={() => onRate("unknown")}
-              className="flex-1 h-12 rounded-2xl bg-red-soft text-red font-bold text-sm border border-red/15 hover:brightness-95 hover:-translate-y-px transition-all active:scale-95"
-            >
-              🔴 Bilmayman
-            </button>
-            <button
-              onClick={() => onRate("partial")}
-              className="flex-1 h-12 rounded-2xl bg-amber-soft text-amber font-bold text-sm border border-amber/15 hover:brightness-95 hover:-translate-y-px transition-all active:scale-95"
-            >
-              🟡 Qisman esladim
-            </button>
-            <button
-              onClick={() => onRate("known")}
-              className="flex-1 h-12 rounded-2xl bg-green-soft text-green font-bold text-sm border border-green/15 hover:brightness-95 hover:-translate-y-px transition-all active:scale-95"
-            >
-              🟢 Esladim
-            </button>
-          </div>
-          <p className="text-center text-[11px] text-muted-soft mt-3">
-            Klaviatura: <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">1</kbd>{" "}
-            <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">2</kbd>{" "}
-            <kbd className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono">3</kbd>
-          </p>
-        </>
+      {(onPrev || onNext) && (
+        <div className="flex items-center gap-2 mt-6">
+          <Button variant="secondary" size="lg" className="flex-1" disabled={isFirst || !onPrev} onClick={onPrev}>
+            <ChevronLeft size={18} /> Oldingi
+          </Button>
+          <Button size="lg" className="flex-1" disabled={!onNext} onClick={onNext}>
+            {isLast ? "Tugatish" : "Keyingi"} <ChevronRight size={18} />
+          </Button>
+        </div>
       )}
     </Card>
   );
