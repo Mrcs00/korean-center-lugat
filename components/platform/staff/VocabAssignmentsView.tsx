@@ -16,6 +16,7 @@ import {
 } from "@/lib/services/assignmentService";
 import { bookWords, examSetTitle, rangeLabel, setWordsInOrder } from "@/lib/utils/examSets";
 import { VocabResultsTable } from "./VocabResultsTable";
+import { groupLabeler } from "@/lib/platform/groupLabel";
 
 // Groups the huge flat VOCAB_SETS list into <optgroup> sections so the
 // picker stays usable across TOPIK reading/listening sets and every
@@ -277,9 +278,9 @@ export function VocabAssignmentsView({ groups }: { groups: GroupFull[] }) {
                   <label className="text-xs font-semibold text-muted">Guruh</label>
                   <select value={groupId} onChange={(e) => setGroupId(e.target.value)} className={inputCls}>
                     {groups.length === 0 && <option value="">Guruhlar yo&apos;q</option>}
-                    {groups.map((g) => (
+                    {groups.map((g, _i, all) => (
                       <option key={g.id} value={g.id}>
-                        {g.name}
+                        {groupLabeler(all)(g)}
                       </option>
                     ))}
                   </select>

@@ -13,6 +13,7 @@ import { formatDate, timeRange } from "@/lib/platform/format";
 import { isoWeekday, shiftDateKey, tashkentDateKey } from "@/lib/utils/dates";
 import type { AttendanceStatus } from "@/lib/platform/types";
 import { useLoad } from "@/components/platform/ui";
+import { groupLabeler } from "@/lib/platform/groupLabel";
 
 type Marks = Record<string, { status: AttendanceStatus | null; note: string }>;
 const STATUSES = Object.keys(ATTENDANCE) as AttendanceStatus[];
@@ -114,8 +115,8 @@ function AttendanceInner({ groups, fixedGroupId }: { groups: GroupFull[]; fixedG
             {!fixedGroupId && (
               <Field label="Guruh">
                 <Select value={groupId} onChange={(e) => setGroupId(e.target.value)}>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
+                  {groups.map((g, _i, all) => (
+                    <option key={g.id} value={g.id}>{groupLabeler(all)(g)}</option>
                   ))}
                 </Select>
               </Field>

@@ -8,6 +8,7 @@ import { CreatedAccount, createAccounts } from "@/lib/platform/api";
 import { NewCredential, credentialsAsText, saveCredentials } from "@/lib/utils/credentialsPrint";
 import { LOGIN_DOMAIN, USERNAME_PATTERN, displayLogin, loginToUsername, usernameBaseFromName } from "@/lib/utils/usernames";
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, randomPassword } from "@/lib/utils/passwords";
+import { groupLabeler } from "@/lib/platform/groupLabel";
 
 const MAX_ROWS = 100;
 
@@ -35,7 +36,7 @@ export function AddAccountsDialog({
 }: {
   open: boolean;
   role: "student" | "teacher";
-  groups?: { id: string; name: string }[];
+  groups?: { id: string; name: string; teacher_id?: string | null; teacher?: { full_name: string } | null }[];
   defaultGroupId?: string;
   onClose: () => void;
   onCreated: () => void;
@@ -245,11 +246,13 @@ export function AddAccountsDialog({
                 <label className="text-xs font-semibold text-muted">Guruh (ixtiyoriy)</label>
                 <Select className="mt-1.5 h-10" value={groupId} onChange={(e) => setGroupId(e.target.value)}>
                   <option value="">Guruhsiz</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
+                  {[...groups]
+                    .sort((a, b) => (a.teacher?.full_name ?? "").localeCompare(b.teacher?.full_name ?? "") || a.name.localeCompare(b.name))
+                    .map((g, _i, sorted) => (
+                      <option key={g.id} value={g.id}>
+                        {groupLabeler(sorted)(g)}
+                      </option>
+                    ))}
                 </Select>
               </div>
             )}

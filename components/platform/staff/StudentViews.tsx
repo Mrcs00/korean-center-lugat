@@ -28,6 +28,7 @@ import { masteryColor } from "@/lib/utils/groupColor";
 import type { Profile } from "@/lib/platform/types";
 import { MonthlyReport } from "./MonthlyReport";
 import { StudentVocabList } from "./StudentVocabList";
+import { groupLabeler } from "@/lib/platform/groupLabel";
 
 // ── students list ───────────────────────────────────────────────────────────
 export function StudentsListView({ role, groups }: { role: StaffRole; groups: GroupFull[] }) {
@@ -40,7 +41,7 @@ export function StudentsListView({ role, groups }: { role: StaffRole; groups: Gr
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "nogroup">("all");
   const [adding, setAdding] = useState(false);
 
-  const groupsOf = (id: string) => (members.data ?? []).filter((m) => m.student_id === id).map((m) => groups.find((g) => g.id === m.group_id)?.name).filter(Boolean) as string[];
+  const groupsOf = (id: string) => (members.data ?? []).filter((m) => m.student_id === id).map((m) => { const g = groups.find((x) => x.id === m.group_id); return g ? groupLabeler(groups)(g) : undefined; }).filter(Boolean) as string[];
   const inGroup = (id: string, gid: string) => (members.data ?? []).some((m) => m.student_id === id && m.group_id === gid);
 
   const rows = (profiles.data ?? []).filter((p) => {
@@ -61,7 +62,7 @@ export function StudentsListView({ role, groups }: { role: StaffRole; groups: Gr
       />
       {profiles.error && <ErrorNote message={profiles.error} onRetry={reload} />}
       <div className="flex flex-col gap-3 mb-4">
-        {groups.length > 1 && <FilterChips value={groupFilter} onChange={setGroupFilter} options={[{ id: "all", label: "Barcha guruhlar" }, ...groups.map((g) => ({ id: g.id, label: g.name }))]} />}
+        {groups.length > 1 && <FilterChips value={groupFilter} onChange={setGroupFilter} options={[{ id: "all", label: "Barcha guruhlar" }, ...groups.map((g, _i, all) => ({ id: g.id, label: groupLabeler(all)(g) }))]} />}
         {role === "admin" && (
           <FilterChips
             value={statusFilter}
@@ -178,7 +179,7 @@ export function StudentProfileView({ role, id }: { role: StaffRole; id: string }
       />
 
       <div className="flex flex-wrap gap-2 mb-5">
-        {myGroups.length === 0 ? <Badge tone="red">Guruhsiz</Badge> : myGroups.map((g) => <Badge key={g.id} tone="brand">{g.name}</Badge>)}
+        {myGroups.length === 0 ? <Badge tone="red">Guruhsiz</Badge> : myGroups.map((g) => <Badge key={g.id} tone="brand">{groupLabeler(groups.data ?? [])(g)}</Badge>)}
       </div>
 
       <Tabs<Tab>
@@ -216,7 +217,7 @@ export function StudentProfileView({ role, id }: { role: StaffRole; id: string }
                 {myGroups.length === 0 && <p className="text-sm text-muted">Hech qaysi guruhda emas.</p>}
                 {myGroups.map((g) => (
                   <div key={g.id} className="flex items-center justify-between gap-3 rounded-xl border border-border px-4 py-2.5">
-                    <span className="text-sm font-semibold">{g.name}</span>
+                    <span className="text-sm font-semibold">{groupLabeler(groups.data ?? [])(g)}</span>
                     <button
                       className="text-xs text-red font-semibold"
                       onClick={() => run(async () => { await removeMember(g.id, id); members.reload(); }, "Guruhdan chiqarildi.")}
@@ -229,7 +230,7 @@ export function StudentProfileView({ role, id }: { role: StaffRole; id: string }
               <div className="flex gap-2">
                 <Select value={addGroup} onChange={(e) => setAddGroup(e.target.value)}>
                   <option value="">Guruhga qo&apos;shish...</option>
-                  {(groups.data ?? []).filter((g) => !myGroupIds.includes(g.id)).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  {(groups.data ?? []).filter((g) => !myGroupIds.includes(g.id)).map((g, _i, avail) => <option key={g.id} value={g.id}>{groupLabeler(groups.data ?? avail)(g)}</option>)}
                 </Select>
                 <Button disabled={!addGroup || busy} onClick={() => run(async () => { await addMembers(addGroup, [id]); setAddGroup(""); members.reload(); }, "Guruhga qo'shildi.")}>Qo&apos;shish</Button>
               </div>

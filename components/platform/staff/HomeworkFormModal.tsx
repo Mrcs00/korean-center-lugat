@@ -10,6 +10,7 @@ import { listMembers, saveHomework, type GroupFull, type Member } from "@/lib/pl
 import { HOMEWORK_TYPES } from "@/lib/platform/labels";
 import { isoToTashkentInput, tashkentInputToIso } from "@/lib/platform/format";
 import type { FileRef, Homework, HomeworkType } from "@/lib/platform/types";
+import { groupLabeler } from "@/lib/platform/groupLabel";
 
 export function HomeworkFormModal({
   open,
@@ -111,8 +112,8 @@ export function HomeworkFormModal({
       <div className="grid sm:grid-cols-2 gap-4">
         <Field label="Guruh">
           <Select value={group} onChange={(e) => { setGroup(e.target.value); setChosen([]); }} disabled={Boolean(existing)}>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+            {groups.map((g, _i, all) => (
+              <option key={g.id} value={g.id}>{groupLabeler(all)(g)}</option>
             ))}
           </Select>
         </Field>

@@ -21,6 +21,7 @@ import { buildGradingQueue, emptySubmission } from "@/lib/platform/homework";
 import { fetchAllAssignments, type RealAssignment } from "@/lib/services/assignmentService";
 import { examSetTitle, rangeLabel } from "@/lib/utils/examSets";
 import type { Homework, Profile, Submission } from "@/lib/platform/types";
+import { groupLabeler } from "@/lib/platform/groupLabel";
 
 // ── list of homework + vocabulary assignments (teacher: own groups, admin: all) ──
 type Row = { id: string; kind: "hw"; h: Homework } | { id: string; kind: "vocab"; a: RealAssignment };
@@ -64,7 +65,10 @@ export function HomeworkListView({ role, groups }: { role: StaffRole; groups: Gr
 
   const membersOf = (h: Homework) => (h.student_ids ? h.student_ids.length : (memberships.data ?? []).filter((m) => m.group_id === h.group_id).length);
   const subsOf = (h: Homework) => (subs.data ?? []).filter((s) => s.homework_id === h.id && s.status !== "draft");
-  const groupName = (gid: string) => groups.find((g) => g.id === gid)?.name ?? "—";
+  const groupName = (gid: string) => {
+    const g = groups.find((x) => x.id === gid);
+    return g ? groupLabeler(groups)(g) : "—";
+  };
 
   const remove = async () => {
     if (!toDelete) return;
@@ -104,7 +108,7 @@ export function HomeworkListView({ role, groups }: { role: StaffRole; groups: Gr
           ]}
         />
         {groups.length > 1 && (
-          <FilterChips value={groupFilter} onChange={setGroupFilter} options={[{ id: "all", label: "Barcha guruhlar" }, ...groups.map((g) => ({ id: g.id, label: g.name }))]} />
+          <FilterChips value={groupFilter} onChange={setGroupFilter} options={[{ id: "all", label: "Barcha guruhlar" }, ...groups.map((g, _i, all) => ({ id: g.id, label: groupLabeler(all)(g) }))]} />
         )}
       </div>
       {hw.loading ? (
@@ -270,7 +274,10 @@ export function GradingView({ groups }: { groups: GroupFull[] }) {
     .filter((a) => ids.includes(a.groupId) && inGroup(a.groupId))
     .sort((x, y) => (y.deadline ?? "").localeCompare(x.deadline ?? ""));
   const nameOf = (id: string, ps: Profile[] | null) => ps?.find((p) => p.id === id)?.full_name ?? "O'quvchi";
-  const groupName = (gid: string) => groups.find((g) => g.id === gid)?.name ?? "";
+  const groupName = (gid: string) => {
+    const g = groups.find((x) => x.id === gid);
+    return g ? groupLabeler(groups)(g) : "";
+  };
 
   return (
     <Page>
@@ -278,7 +285,7 @@ export function GradingView({ groups }: { groups: GroupFull[] }) {
       {(hw.error || subs.error || members.error || vocab.error) && <ErrorNote message={(hw.error ?? subs.error ?? members.error ?? vocab.error) as string} />}
       {groups.length > 1 && (
         <div className="mb-4">
-          <FilterChips value={groupFilter} onChange={setGroupFilter} options={[{ id: "all", label: "Barcha guruhlar" }, ...groups.map((g) => ({ id: g.id, label: g.name }))]} />
+          <FilterChips value={groupFilter} onChange={setGroupFilter} options={[{ id: "all", label: "Barcha guruhlar" }, ...groups.map((g, _i, all) => ({ id: g.id, label: groupLabeler(all)(g) }))]} />
         </div>
       )}
 
